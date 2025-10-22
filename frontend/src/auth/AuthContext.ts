@@ -5,6 +5,8 @@ export type AuthContextType = {
   setToken: (t: string | null) => void;
   login: (data: { token: string }) => void;
   logout: () => void;
+  roles: string[];
+  hasRole: (role: string) => boolean;
 };
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);

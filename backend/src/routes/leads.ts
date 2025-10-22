@@ -8,13 +8,20 @@ export async function leadRoutes(app: FastifyInstance) {
   // GET /leads  → lista clientes (opcional: ?q=texto&limit=100)
   app.get(
     "/",
-    { preHandler: (app as any).authorize(["admin", "operador"]) },
+    { preHandler: (app as any).authorize(["admin", "captador"]) },
     async (req) => {
       const { q, limit } = (req.query ?? {}) as { q?: string; limit?: string };
+      const user = (req as any).user;
 
       const take = Math.min(Math.max(Number(limit) || 100, 1), 500);
 
       const where: any = {};
+      
+      // Si es captador, solo ver sus propios leads captados
+      if (user.roles.includes("captador") && !user.roles.includes("admin")) {
+        where.idVendedor = user.sub;
+      }
+
       if (q && q.trim()) {
         where.OR = [
           { nombre: { contains: q } },
@@ -36,7 +43,7 @@ export async function leadRoutes(app: FastifyInstance) {
   // POST /leads  → crea cliente
   app.post(
     "/",
-    { preHandler: (app as any).authorize(["admin"]) },
+    { preHandler: (app as any).authorize(["admin", "captador"]) },
     async (req, reply) => {
       const {
         nombre,
@@ -53,6 +60,8 @@ export async function leadRoutes(app: FastifyInstance) {
         sector?: string;
         observaciones?: string;
       };
+
+      const user = (req as any).user;
 
       if (!nombre) {
         return reply.code(400).send({ error: "nombre es requerido" });
@@ -78,6 +87,7 @@ export async function leadRoutes(app: FastifyInstance) {
             correo,
             direccion: direccion ?? null,
             sector: sector ?? null,
+            idVendedor: user.sub, // Asignar automáticamente el usuario que crea el lead
           },
         });
         return reply.code(201).send(nuevo);

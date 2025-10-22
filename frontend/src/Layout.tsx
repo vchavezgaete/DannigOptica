@@ -69,15 +69,19 @@ export default function Layout() {
           <NavLink to="/leads" className="nav__link">
             📋 Captación
           </NavLink>
-          <NavLink to="/appointments" className="nav__link">
-            📅 Citas
-          </NavLink>
           <NavLink to="/clientes" className="nav__link">
             👥 Clientes
           </NavLink>
-          <NavLink to="/reportes" className="nav__link">
-            📊 Reportes
-          </NavLink>
+          {auth.hasRole('admin') && (
+            <>
+              <NavLink to="/appointments" className="nav__link">
+                📅 Citas
+              </NavLink>
+              <NavLink to="/reportes" className="nav__link">
+                📊 Reportes
+              </NavLink>
+            </>
+          )}
         </div>
       </nav>
 

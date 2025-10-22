@@ -5,6 +5,9 @@ export async function productoRoutes(app: FastifyInstance) {
   // 🔐 Requiere JWT en todas las rutas
   app.addHook("preHandler", (app as any).authenticate);
   
+  // 🔒 Solo admin puede acceder a productos
+  app.addHook("preHandler", (app as any).authorize(["admin"]));
+  
   // GET /productos
   app.get("/", async () => {
     const productos = await prisma.producto.findMany({
