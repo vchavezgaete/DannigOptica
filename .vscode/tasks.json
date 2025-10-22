@@ -1,0 +1,41 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "docker:up",
+      "type": "shell",
+      "command": "docker compose up -d",
+      "options": { "cwd": "${workspaceFolder}/infra" },
+      "detail": "Levanta MySQL + Adminer"
+    },
+    {
+      "label": "docker:down",
+      "type": "shell",
+      "command": "docker compose down",
+      "options": { "cwd": "${workspaceFolder}/infra" },
+      "detail": "Detiene y elimina contenedores"
+    },
+    {
+      "label": "backend:dev",
+      "type": "npm",
+      "script": "dev",
+      "path": "backend",
+      "problemMatcher": "$tsc-watch",
+      "detail": "Arranca Fastify con ts-node-dev"
+    },
+    {
+      "label": "backend:dev:debug",
+      "type": "npm",
+      "script": "dev:debug",
+      "path": "backend",
+      "detail": "Arranca Fastify en modo debug (inspector 9229)"
+    },
+    {
+      "label": "frontend:dev",
+      "type": "npm",
+      "script": "dev",
+      "path": "frontend",
+      "detail": "Arranca Vite"
+    }
+  ]
+}
