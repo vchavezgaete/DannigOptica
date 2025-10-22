@@ -6,7 +6,7 @@ import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
 
 export async function authRoutes(app: FastifyInstance) {
-  // Semilla opcional para crear rol y usuario admin
+  // Semilla opcional para crear roles y usuarios admin y captador
   app.post("/seed", async (req, reply) => {
     try {
       // Lee credenciales desde variables de entorno
@@ -14,25 +14,50 @@ export async function authRoutes(app: FastifyInstance) {
       const adminEmail = process.env.ADMIN_EMAIL || "admin@dannig.local";
       const adminPassword = process.env.ADMIN_PASSWORD || "admin123";
 
+      const captadorName = process.env.CAPTADOR_NAME || "Captador";
+      const captadorEmail = process.env.CAPTADOR_EMAIL || "captador@dannig.local";
+      const captadorPassword = process.env.CAPTADOR_PASSWORD || "captador123";
+
+      // Crear roles
       const adminRol = await prisma.rol.upsert({
         where: { nombre: "admin" },
         update: {},
         create: { nombre: "admin" },
       });
 
-      const hash = await bcrypt.hash(adminPassword, 10);
+      const captadorRol = await prisma.rol.upsert({
+        where: { nombre: "captador" },
+        update: {},
+        create: { nombre: "captador" },
+      });
 
+      // Crear usuario admin
+      const adminHash = await bcrypt.hash(adminPassword, 10);
       const adminUser = await prisma.usuario.upsert({
         where: { correo: adminEmail },
-        update: { nombre: adminName, hashPassword: hash, activo: 1 }, // <- number
+        update: { nombre: adminName, hashPassword: adminHash, activo: 1 },
         create: {
           nombre: adminName,
           correo: adminEmail,
-          hashPassword: hash,
-          activo: 1, // <- number
+          hashPassword: adminHash,
+          activo: 1,
         },
       });
 
+      // Crear usuario captador
+      const captadorHash = await bcrypt.hash(captadorPassword, 10);
+      const captadorUser = await prisma.usuario.upsert({
+        where: { correo: captadorEmail },
+        update: { nombre: captadorName, hashPassword: captadorHash, activo: 1 },
+        create: {
+          nombre: captadorName,
+          correo: captadorEmail,
+          hashPassword: captadorHash,
+          activo: 1,
+        },
+      });
+
+      // Asignar rol admin
       await prisma.usuarioRol.upsert({
         where: {
           idUsuario_idRol: {
@@ -47,10 +72,27 @@ export async function authRoutes(app: FastifyInstance) {
         },
       });
 
+      // Asignar rol captador
+      await prisma.usuarioRol.upsert({
+        where: {
+          idUsuario_idRol: {
+            idUsuario: captadorUser.idUsuario,
+            idRol: captadorRol.idRol,
+          },
+        },
+        update: {},
+        create: {
+          idUsuario: captadorUser.idUsuario,
+          idRol: captadorRol.idRol,
+        },
+      });
+
       return {
         ok: true,
-        usuario: { id: adminUser.idUsuario, correo: adminUser.correo },
-        rol: adminRol.nombre,
+        usuarios: [
+          { id: adminUser.idUsuario, correo: adminUser.correo, rol: adminRol.nombre },
+          { id: captadorUser.idUsuario, correo: captadorUser.correo, rol: captadorRol.nombre },
+        ],
       };
     } catch (err: any) {
       req.log.error(err);

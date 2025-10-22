@@ -1,7 +1,8 @@
 // src/pages/Leads.tsx
-import { useEffect, useState, useCallback, type FormEvent } from "react";
+import { useEffect, useState, useCallback, type FormEvent, useContext } from "react";
 import { isAxiosError } from "axios";
 import { api } from "../api";
+import { AuthContext } from "../auth/AuthContext";
 
 type Cliente = {
   idCliente: number;
@@ -39,6 +40,7 @@ function extractMsg(data: unknown): string | undefined {
 }
 
 export default function Leads() {
+  const auth = useContext(AuthContext);
   const [list, setList] = useState<Cliente[]>([]);
   const [q, setQ] = useState("");
   const [form, setForm] = useState<LeadForm>({
@@ -51,6 +53,9 @@ export default function Leads() {
   const [msg, setMsg] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  // Determine if user is captador
+  const isCaptador = auth?.hasRole('captador') && !auth?.hasRole('admin');
 
   // limpia el mensaje verde a los 3s
   useEffect(() => {
@@ -112,6 +117,9 @@ export default function Leads() {
             <li>Verifica que el RUT sea correcto antes de registrar</li>
             <li>Agrega el contacto (teléfono o email) para futuras comunicaciones</li>
             <li>El sector ayuda a organizar las visitas por zona geográfica</li>
+            {isCaptador && (
+              <li><strong>Nota:</strong> Solo puedes ver y editar los clientes que tú has captado</li>
+            )}
           </ul>
         </div>
       </div>
@@ -200,7 +208,10 @@ export default function Leads() {
         <div className="section__header">
           <h2 className="section__title">🔍 Clientes Captados</h2>
           <p className="section__subtitle">
-            {list.length} clientes captados registrados en el sistema
+            {isCaptador 
+              ? `${list.length} clientes captados por ti registrados en el sistema`
+              : `${list.length} clientes captados registrados en el sistema`
+            }
           </p>
         </div>
 

@@ -5,6 +5,9 @@ import { prisma } from "../db";
 export async function reporteRoutes(app: FastifyInstance) {
   // 🔐 Require JWT on all routes
   app.addHook("preHandler", (app as any).authenticate);
+  
+  // 🔒 Solo admin puede acceder a reportes
+  app.addHook("preHandler", (app as any).authorize(["admin"]));
 
   app.get("/", async (req, reply) => {
     const { tipo, fechaDesde, fechaHasta, limit } = req.query as {

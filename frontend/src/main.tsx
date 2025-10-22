@@ -2,6 +2,7 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import { createBrowserRouter, RouterProvider, Navigate } from "react-router-dom";
 import ProtectedRoute from "./ProtectedRoute";
+import RoleProtectedRoute from "./RoleProtectedRoute";
 import Layout from "./Layout";
 import Home from "./pages/Home";
 import Login from "./pages/Login";
@@ -25,9 +26,23 @@ const router = createBrowserRouter([
     children: [
       { index: true, element: <Home /> },
       { path: "leads", element: <Leads /> },
-      { path: "appointments", element: <Appointments /> },
+      { 
+        path: "appointments", 
+        element: (
+          <RoleProtectedRoute requiredRole="admin">
+            <Appointments />
+          </RoleProtectedRoute>
+        )
+      },
       { path: "clientes", element: <Clientes /> },
-      { path: "reportes", element: <Reportes /> },
+      { 
+        path: "reportes", 
+        element: (
+          <RoleProtectedRoute requiredRole="admin">
+            <Reportes />
+          </RoleProtectedRoute>
+        )
+      },
     ],
   },
   // Redirect cualquier ruta no encontrada a /

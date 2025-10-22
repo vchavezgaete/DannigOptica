@@ -33,4 +33,6 @@ export interface AuthContextType {
   setToken: (t: string | null) => void;
   login: (data: { token: string }) => void;
   logout: () => void;
+  roles: string[];
+  hasRole: (role: string) => boolean;
 }

@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useState, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import { api } from "../api";
+import { AuthContext } from "../auth/AuthContext";
 
 type Cliente = {
   idCliente: number;
@@ -15,6 +16,7 @@ type Cliente = {
 
 export default function Clientes() {
   const navigate = useNavigate();
+  const auth = useContext(AuthContext);
   const [rut, setRut] = useState("");
   const [cliente, setCliente] = useState<Cliente | null>(null);
   const [loading, setLoading] = useState(false);
@@ -29,6 +31,9 @@ export default function Clientes() {
     direccion: "",
     sector: ""
   });
+
+  // Determine if user is captador
+  const isCaptador = auth?.hasRole('captador') && !auth?.hasRole('admin');
 
   async function buscar() {
     setErr(null); setCliente(null); setLoading(true);
@@ -123,8 +128,16 @@ export default function Clientes() {
         <div className="section__header">
           <h1 className="section__title">👥 Consulta de Clientes</h1>
           <p className="section__subtitle">
-            Busca información detallada de tus clientes registrados
+            {isCaptador 
+              ? "Busca información de los clientes que has captado"
+              : "Busca información detallada de tus clientes registrados"
+            }
           </p>
+          {isCaptador && (
+            <div className="alert alert--info" style={{ marginTop: "1rem" }}>
+              <strong>📌 Nota:</strong> Como captador, solo puedes ver información de los clientes que tú has captado.
+            </div>
+          )}
         </div>
       </div>
 
@@ -241,21 +254,25 @@ export default function Clientes() {
 
           {/* Acciones */}
           <div className="flex" style={{ marginTop: "1.5rem", gap: "1rem" }}>
-            <button 
-              className="btn btn--secondary btn--small"
-              onClick={() => {
-                // Navegar a la página de citas con el cliente preseleccionado
-                navigate(`/appointments?clienteId=${cliente.idCliente}&clienteNombre=${encodeURIComponent(cliente.nombre)}`);
-              }}
-            >
-              📅 Agendar Cita
-            </button>
-            <button 
-              className="btn btn--secondary btn--small"
-              onClick={abrirEditarModal}
-            >
-              📝 Editar Información
-            </button>
+            {auth?.hasRole('admin') && (
+              <button 
+                className="btn btn--secondary btn--small"
+                onClick={() => {
+                  // Navegar a la página de citas con el cliente preseleccionado
+                  navigate(`/appointments?clienteId=${cliente.idCliente}&clienteNombre=${encodeURIComponent(cliente.nombre)}`);
+                }}
+              >
+                📅 Agendar Cita
+              </button>
+            )}
+            {auth?.hasRole('admin') && (
+              <button 
+                className="btn btn--secondary btn--small"
+                onClick={abrirEditarModal}
+              >
+                📝 Editar Información
+              </button>
+            )}
             <button 
               className="btn btn--secondary btn--small"
               onClick={cargarHistorial}
