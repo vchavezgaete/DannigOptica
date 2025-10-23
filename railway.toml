@@ -17,4 +17,17 @@ startCommand = "node dist/server.js"
 [deploy.env]
 NODE_ENV = "production"
 PORT = "3001"
+JWT_SECRET = "d0e7a1e93a8d71b37105ffa0038035c5ed9f33d5ff3c57ea0c4d101ac6e8ebbd08743882ae2f8b747a7eaeef8d7b2891b62c9606c5237a8b1ed8c0f6b0af182c"
+ADMIN_NAME = "Admin"
+ADMIN_EMAIL = "admin@dannig.local"
+ADMIN_PASSWORD = "admin123"
+CAPTADOR_NAME = "Captador"
+CAPTADOR_EMAIL = "captador@dannig.local"
+CAPTADOR_PASSWORD = "captador123"
+OFTALMOLOGO_NAME = "Dr. Oftalmólogo"
+OFTALMOLOGO_EMAIL = "oftalmologo@dannig.local"
+OFTALMOLOGO_PASSWORD = "oftalmologo123"
+
+# NOTA: DATABASE_URL debe configurarse manualmente en Railway Dashboard
+# ya que contiene información sensible de conexión a la base de datos
 
