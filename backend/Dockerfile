@@ -24,6 +24,12 @@ RUN npx prisma generate
 # Compilar TypeScript a dist
 RUN npm run build
 
+# Copiar scripts de inicialización
+COPY scripts/init.sh ./scripts/init.sh
+COPY scripts/start-production.sh ./scripts/start-production.sh
+COPY scripts/validate-env.sh ./scripts/validate-env.sh
+RUN chmod +x ./scripts/init.sh ./scripts/start-production.sh ./scripts/validate-env.sh
+
 # Exponer puerto
 EXPOSE 3001
 
@@ -31,8 +37,10 @@ EXPOSE 3001
 ENV NODE_ENV=production
 ENV PORT=3001
 
-# Comando de inicialización simplificado
+# Comando de inicialización con validación de variables
 CMD echo '🚀 Iniciando DannigOptica Backend...' && \
+    echo '🔍 Validando variables de entorno...' && \
+    ./scripts/validate-env.sh && \
     echo '📊 Verificando configuración de base de datos...' && \
     if [ "$NODE_ENV" = "production" ] || echo "$DATABASE_URL" | grep -q "postgresql"; then \
         echo '🐘 PostgreSQL detectado en producción' && \
