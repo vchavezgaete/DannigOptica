@@ -1,5 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useContext } from "react";
 import { api } from "../api";
+import { AuthContext } from "../auth/AuthContext";
 
 type Producto = { 
   idProducto: number; 
@@ -10,9 +11,14 @@ type Producto = {
 };
 
 export default function Home() {
+  const auth = useContext(AuthContext);
   const [data, setData] = useState<Producto[]>([]);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
+
+  // Determine if user is admin
+  const isAdmin = auth?.hasRole('admin');
+  const isCaptador = auth?.hasRole('captador') && !auth?.hasRole('admin');
 
   useEffect(() => {
     (async () => {
@@ -28,6 +34,54 @@ export default function Home() {
       }
     })();
   }, []);
+
+  // Si es captador, mostrar mensaje de acceso restringido
+  if (isCaptador) {
+    return (
+      <div className="grid">
+        <div className="section">
+          <div className="section__header">
+            <h1 className="section__title">🔒 Acceso Restringido</h1>
+            <p className="section__subtitle">
+              Este módulo solo es visible para administradores
+            </p>
+          </div>
+          
+          <div className="alert alert--warning" style={{ textAlign: "center", padding: "2rem" }}>
+            <h3 style={{ margin: "0 0 1rem", color: "var(--naranja)" }}>
+              🚫 Módulo de Inicio - Solo Administradores
+            </h3>
+            <p style={{ margin: "0 0 1rem", fontSize: "1.1rem" }}>
+              Como <strong>captador</strong>, no tienes acceso al módulo de Inicio.
+            </p>
+            <p style={{ margin: "0 0 1.5rem", color: "var(--texto-sec)" }}>
+              Este módulo contiene información administrativa y catálogo de productos 
+              que solo está disponible para usuarios con rol de administrador.
+            </p>
+            
+            <div style={{ 
+              background: "var(--gris)", 
+              padding: "1rem", 
+              borderRadius: "0.5rem",
+              margin: "1rem 0"
+            }}>
+              <h4 style={{ margin: "0 0 0.5rem", color: "var(--verde)" }}>
+                📋 Módulos disponibles para ti:
+              </h4>
+              <ul style={{ margin: "0", textAlign: "left", display: "inline-block" }}>
+                <li><strong>Captación:</strong> Registrar nuevos clientes</li>
+                <li><strong>Clientes:</strong> Consultar tus clientes captados</li>
+              </ul>
+            </div>
+            
+            <p style={{ margin: "1rem 0 0", fontSize: "0.9rem", color: "var(--texto-sec)" }}>
+              Si necesitas acceso administrativo, contacta al administrador del sistema.
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (loading) {
     return (

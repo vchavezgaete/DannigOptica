@@ -69,9 +69,13 @@ export default function Layout() {
           <NavLink to="/leads" className="nav__link">
             📋 Captación
           </NavLink>
-          <NavLink to="/clientes" className="nav__link">
-            👥 Clientes
-          </NavLink>
+          {/* Clientes visible para captadores y admin */}
+          {(auth.hasRole('captador') || auth.hasRole('admin')) && (
+            <NavLink to="/clientes" className="nav__link">
+              👥 Clientes
+            </NavLink>
+          )}
+          {/* Solo admin ve estos módulos */}
           {auth.hasRole('admin') && (
             <>
               <NavLink to="/appointments" className="nav__link">

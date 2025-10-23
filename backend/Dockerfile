@@ -25,8 +25,8 @@ RUN npx prisma generate
 RUN npm run build
 
 # Copiar script de inicialización
-COPY scripts/init.sh /usr/local/bin/init.sh
-RUN chmod +x /usr/local/bin/init.sh
+COPY scripts/init.sh ./scripts/init.sh
+RUN chmod +x ./scripts/init.sh
 
 # Exponer puerto
 EXPOSE 3001
@@ -35,5 +35,5 @@ EXPOSE 3001
 ENV NODE_ENV=production
 ENV PORT=3001
 
-# Comando para iniciar la aplicación
-CMD ["/usr/local/bin/init.sh"]
+# Comando para iniciar la aplicación directamente
+CMD ["sh", "-c", "echo 'Esperando MySQL...' && until nc -z mysql 3306; do sleep 1; done && echo 'MySQL disponible, sincronizando schema...' && npx prisma db push --accept-data-loss && echo 'Schema sincronizado' && echo 'Iniciando servidor...' && node dist/server.js"]
