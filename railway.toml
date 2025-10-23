@@ -10,5 +10,11 @@ numReplicas = 1
 restartPolicyType = "ON_FAILURE"
 restartPolicyMaxRetries = 10
 healthcheckPath = "/health"
-healthcheckTimeout = 100
+healthcheckTimeout = 300
+startCommand = "node dist/server.js"
+
+# Variables de entorno para Railway
+[deploy.env]
+NODE_ENV = "production"
+PORT = "3001"
 

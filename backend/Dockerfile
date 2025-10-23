@@ -35,5 +35,5 @@ EXPOSE 3001
 ENV NODE_ENV=production
 ENV PORT=3001
 
-# Comando para iniciar la aplicación directamente
-CMD ["sh", "-c", "echo 'Esperando MySQL...' && until nc -z mysql 3306; do sleep 1; done && echo 'MySQL disponible, sincronizando schema...' && npx prisma db push --accept-data-loss && echo 'Schema sincronizado' && echo 'Iniciando servidor...' && node dist/server.js"]
+# Comando para iniciar la aplicación con soporte para MySQL y PostgreSQL
+CMD ["sh", "-c", "echo 'Verificando base de datos...' && if [[ \"$DATABASE_URL\" == *\"postgresql\"* ]]; then echo 'PostgreSQL detectado, migrando...' && npx prisma generate && npx prisma db push --accept-data-loss && echo 'Migración PostgreSQL completada'; else echo 'MySQL detectado, esperando conexión...' && until nc -z mysql 3306; do sleep 1; done && echo 'MySQL disponible, sincronizando schema...' && npx prisma generate && npx prisma db push --accept-data-loss && echo 'Schema MySQL sincronizado'; fi && echo 'Iniciando servidor...' && node dist/server.js"]

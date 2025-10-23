@@ -10,6 +10,7 @@ services:
     dockerContext: ./backend
     plan: free  # Cambia a 'starter' para más recursos
     healthCheckPath: /health
+    healthCheckTimeout: 300
     envVars:
       - key: DATABASE_URL
         fromDatabase:
@@ -27,7 +28,15 @@ services:
       - key: ADMIN_EMAIL
         value: admin@dannig.local
       - key: ADMIN_PASSWORD
+        value: admin123
         sync: false  # Configurar manualmente en UI por seguridad
+      - key: CAPTADOR_NAME
+        value: Captador
+      - key: CAPTADOR_EMAIL
+        value: captador@dannig.local
+      - key: CAPTADOR_PASSWORD
+        value: captador123
+        sync: false
 
   # Frontend React
   - type: web
