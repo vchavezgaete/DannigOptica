@@ -26,14 +26,14 @@ const router = createBrowserRouter([
     children: [
       { index: true, element: <Home /> },
       { path: "leads", element: <Leads /> },
-      { 
-        path: "appointments", 
-        element: (
-          <RoleProtectedRoute requiredRole="admin">
-            <Appointments />
-          </RoleProtectedRoute>
-        )
-      },
+              {
+                path: "appointments",
+                element: (
+                  <RoleProtectedRoute requiredRole="oftalmologo">
+                    <Appointments />
+                  </RoleProtectedRoute>
+                )
+              },
       { path: "clientes", element: <Clientes /> },
       { 
         path: "reportes", 

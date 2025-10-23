@@ -39,6 +39,79 @@ function extractMsg(data: unknown): string | undefined {
   return undefined;
 }
 
+// Funciones para formatear RUT
+function limpiarRUT(rut: string): string {
+  return rut.replace(/[^0-9kK]/g, '');
+}
+
+function calcularDigitoVerificador(rut: string): string {
+  let suma = 0;
+  let multiplicador = 2;
+  
+  for (let i = rut.length - 1; i >= 0; i--) {
+    suma += parseInt(rut[i]) * multiplicador;
+    multiplicador = multiplicador === 7 ? 2 : multiplicador + 1;
+  }
+  
+  const resto = suma % 11;
+  const dv = 11 - resto;
+  
+  if (dv === 11) return '0';
+  if (dv === 10) return 'K';
+  return dv.toString();
+}
+
+function formatearRUT(rut: string): string {
+  // Limpiar el RUT
+  const rutLimpio = limpiarRUT(rut);
+  
+  if (rutLimpio.length === 0) return '';
+  
+  // Si tiene más de 8 dígitos, truncar
+  if (rutLimpio.length > 8) {
+    const numero = rutLimpio.substring(0, 8);
+    const dv = calcularDigitoVerificador(numero);
+    return formatearRUTCompleto(numero + dv);
+  }
+  
+  // Si tiene 8 dígitos, calcular DV automáticamente
+  if (rutLimpio.length === 8) {
+    const numero = rutLimpio;
+    const dv = calcularDigitoVerificador(numero);
+    return formatearRUTCompleto(numero + dv);
+  }
+  
+  // Si tiene menos de 8 dígitos, solo formatear
+  return formatearRUTCompleto(rutLimpio);
+}
+
+function formatearRUTCompleto(rut: string): string {
+  const rutLimpio = limpiarRUT(rut);
+  
+  if (rutLimpio.length <= 1) return rutLimpio;
+  
+  // Separar número y dígito verificador
+  const numero = rutLimpio.slice(0, -1);
+  const dv = rutLimpio.slice(-1).toUpperCase();
+  
+  // Formatear número con puntos
+  const numeroFormateado = numero.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+  
+  return `${numeroFormateado}-${dv}`;
+}
+
+function validarRUT(rut: string): boolean {
+  const rutLimpio = limpiarRUT(rut);
+  
+  if (rutLimpio.length < 8) return false;
+  
+  const numero = rutLimpio.slice(0, -1);
+  const dvIngresado = rutLimpio.slice(-1).toUpperCase();
+  const dvCalculado = calcularDigitoVerificador(numero);
+  
+  return dvIngresado === dvCalculado;
+}
+
 export default function Leads() {
   const auth = useContext(AuthContext);
   const [list, setList] = useState<Cliente[]>([]);
@@ -52,10 +125,28 @@ export default function Leads() {
   });
   const [msg, setMsg] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
+  const [rutError, setRutError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   // Determine if user is captador
   const isCaptador = auth?.hasRole('captador') && !auth?.hasRole('admin');
+
+  // Función para manejar el cambio del RUT
+  function handleRutChange(value: string) {
+    setRutError(null);
+    
+    // Formatear automáticamente
+    const rutFormateado = formatearRUT(value);
+    setForm({ ...form, documento: rutFormateado });
+    
+    // Validar si está completo
+    if (rutFormateado.length >= 10) {
+      const esValido = validarRUT(rutFormateado);
+      if (!esValido) {
+        setRutError("RUT inválido. Verifica el dígito verificador.");
+      }
+    }
+  }
 
   // limpia el mensaje verde a los 3s
   useEffect(() => {
@@ -83,6 +174,14 @@ export default function Leads() {
     e.preventDefault();
     setMsg(null);
     setErr(null);
+    setRutError(null);
+    
+    // Validar RUT antes de enviar
+    if (!validarRUT(form.documento)) {
+      setRutError("RUT inválido. Verifica el dígito verificador.");
+      return;
+    }
+    
     setLoading(true);
     try {
       const res = await api.post("/leads", form);
@@ -150,12 +249,37 @@ export default function Leads() {
             <div className="form__group">
               <label className="form__label">RUT *</label>
               <input 
-                className="form__input"
-                placeholder="12.345.678-9" 
+                className={`form__input ${rutError ? 'form__input--error' : ''}`}
+                placeholder="12345678" 
                 value={form.documento} 
-                onChange={(e) => setForm({ ...form, documento: e.target.value })} 
+                onChange={(e) => handleRutChange(e.target.value)} 
                 required 
+                maxLength={12}
+                style={{
+                  fontFamily: 'monospace',
+                  fontSize: '1rem',
+                  letterSpacing: '0.05em'
+                }}
               />
+              {rutError && (
+                <div style={{ 
+                  color: 'var(--rojo)', 
+                  fontSize: '0.85rem', 
+                  marginTop: '0.25rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.25rem'
+                }}>
+                  ⚠️ {rutError}
+                </div>
+              )}
+              <div style={{ 
+                color: 'var(--texto-sec)', 
+                fontSize: '0.8rem', 
+                marginTop: '0.25rem' 
+              }}>
+                💡 Solo ingresa los números, el formato se aplica automáticamente
+              </div>
             </div>
           </div>
           

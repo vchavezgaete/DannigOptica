@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { api } from "../api";
+import HorasAgendadasTable from "../components/HorasAgendadasTable";
 import {
   BarChart,
   Bar,
@@ -19,15 +20,59 @@ type TipoReporte =
   | "productos-mas-vendidos" 
   | "ventas-por-periodo" 
   | "clientes-nuevos" 
-  | "top-clientes";
+  | "top-clientes"
+  | "horas-agendadas";
+
+type VendedorData = {
+  idUsuario: number;
+  nombre: string;
+  correo: string;
+  totalClientes: number;
+  roles: string[];
+};
+
+type ProductoData = {
+  idProducto: number;
+  codigo: string;
+  nombre: string;
+  tipo: string | null;
+  cantidadVendida: number;
+  ingresoTotal: number;
+};
+
+type VentaData = {
+  idVenta: number;
+  fechaVenta: string;
+  total: number;
+  cliente: {
+    nombre: string;
+  };
+};
+
+type ClienteData = {
+  idCliente: number;
+  rut: string;
+  nombre: string;
+  telefono?: string;
+  correo?: string;
+  sector?: string;
+  fechaCreacion: string;
+  vendedor?: {
+    nombre: string;
+  };
+  totalCompras?: number;
+  montoTotal?: number;
+  promedioCompra?: number;
+  ultimaCompra?: string;
+};
 
 type ReporteData = {
   tipo: string;
   fechaDesde: string | null;
   fechaHasta: string | null;
   total?: number;
-  estadisticas?: any;
-  datos: any[];
+  estadisticas?: Record<string, unknown>;
+  datos: VendedorData[] | ProductoData[] | VentaData[] | ClienteData[];
 };
 
 export default function Reportes() {
@@ -44,7 +89,7 @@ export default function Reportes() {
     setLoading(true);
     
     try {
-      const params: any = { tipo: tipoReporte };
+      const params: Record<string, string> = { tipo: tipoReporte };
       
       if (usarFiltros) {
         if (fechaDesde) params.fechaDesde = fechaDesde;
@@ -53,8 +98,9 @@ export default function Reportes() {
 
       const { data } = await api.get<ReporteData>("/reportes", { params });
       setReporteData(data);
-    } catch (err: any) {
-      setError(err.response?.data?.error || "Error al generar el reporte");
+    } catch (err: unknown) {
+      const error = err as { response?: { data?: { error?: string } } };
+      setError(error.response?.data?.error || "Error al generar el reporte");
       setReporteData(null);
     } finally {
       setLoading(false);
@@ -66,15 +112,17 @@ export default function Reportes() {
 
     switch (reporteData.tipo) {
       case "top-vendedores":
-        return <TopVendedoresTable datos={reporteData.datos} />;
+        return <TopVendedoresTable datos={reporteData.datos as VendedorData[]} />;
       case "productos-mas-vendidos":
-        return <ProductosMasVendidosTable datos={reporteData.datos} />;
+        return <ProductosMasVendidosTable datos={reporteData.datos as ProductoData[]} />;
       case "ventas-por-periodo":
-        return <VentasPorPeriodoView datos={reporteData.datos} estadisticas={reporteData.estadisticas} />;
+        return <VentasPorPeriodoView datos={reporteData.datos as VentaData[]} estadisticas={reporteData.estadisticas || {}} />;
       case "clientes-nuevos":
-        return <ClientesNuevosTable datos={reporteData.datos} />;
+        return <ClientesNuevosTable datos={reporteData.datos as ClienteData[]} />;
       case "top-clientes":
-        return <TopClientesTable datos={reporteData.datos} />;
+        return <TopClientesTable datos={reporteData.datos as ClienteData[]} />;
+      case "horas-agendadas":
+        return <HorasAgendadasTable datos={reporteData.datos as unknown[]} estadisticas={reporteData.estadisticas} />;
       default:
         return <div>Tipo de reporte no reconocido</div>;
     }
@@ -113,6 +161,7 @@ export default function Reportes() {
               <option value="ventas-por-periodo">💰 Ventas por Período</option>
               <option value="clientes-nuevos">👥 Clientes Nuevos</option>
               <option value="top-clientes">⭐ Top Clientes (por monto de compras)</option>
+              <option value="horas-agendadas">📅 Horas Agendadas</option>
             </select>
           </div>
 
@@ -198,7 +247,7 @@ export default function Reportes() {
 }
 
 // Component: Top Vendedores Table
-function TopVendedoresTable({ datos }: { datos: any[] }) {
+function TopVendedoresTable({ datos }: { datos: VendedorData[] }) {
   if (!datos || datos.length === 0) {
     return (
       <div className="alert alert--info">
@@ -211,8 +260,6 @@ function TopVendedoresTable({ datos }: { datos: any[] }) {
     nombre: v.nombre,
     clientes: v.totalClientes,
   }));
-
-  const COLORS = ["#10b981", "#3b82f6", "#f59e0b", "#8b5cf6", "#ef4444", "#14b8a6"];
 
   return (
     <div>
@@ -293,7 +340,7 @@ function TopVendedoresTable({ datos }: { datos: any[] }) {
 }
 
 // Component: Productos Mas Vendidos Table
-function ProductosMasVendidosTable({ datos }: { datos: any[] }) {
+function ProductosMasVendidosTable({ datos }: { datos: ProductoData[] }) {
   if (!datos || datos.length === 0) {
     return (
       <div className="alert alert--info">
@@ -323,7 +370,7 @@ function ProductosMasVendidosTable({ datos }: { datos: any[] }) {
                 cx="50%"
                 cy="50%"
                 labelLine={false}
-                label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                label={(entry: Record<string, unknown>) => `${entry.name}: ${((entry.percent as number) * 100).toFixed(0)}%`}
                 outerRadius={80}
                 fill="#8884d8"
                 dataKey="value"
@@ -345,7 +392,7 @@ function ProductosMasVendidosTable({ datos }: { datos: any[] }) {
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="nombre" angle={-45} textAnchor="end" height={100} />
               <YAxis />
-              <Tooltip formatter={(value: any) => `$${Number(value).toLocaleString("es-CL")}`} />
+              <Tooltip formatter={(value: number) => `$${Number(value).toLocaleString("es-CL")}`} />
               <Legend />
               <Bar dataKey="ingresoTotal" fill="#10b981" name="Ingreso Total" />
             </BarChart>
@@ -401,7 +448,7 @@ function ProductosMasVendidosTable({ datos }: { datos: any[] }) {
 }
 
 // Component: Ventas Por Periodo View
-function VentasPorPeriodoView({ datos, estadisticas }: { datos: any[]; estadisticas: any }) {
+function VentasPorPeriodoView({ datos, estadisticas }: { datos: VentaData[]; estadisticas: Record<string, unknown> }) {
   return (
     <div>
       {/* Estadísticas agregadas */}
@@ -411,7 +458,7 @@ function VentasPorPeriodoView({ datos, estadisticas }: { datos: any[]; estadisti
             Total de Ventas
           </h3>
           <div style={{ fontSize: "2.5rem", fontWeight: "bold", color: "var(--verde)" }}>
-            {estadisticas.totalVentas}
+            {estadisticas.totalVentas as number}
           </div>
         </div>
         <div className="card">
@@ -419,7 +466,7 @@ function VentasPorPeriodoView({ datos, estadisticas }: { datos: any[]; estadisti
             Ingreso Total
           </h3>
           <div style={{ fontSize: "2rem", fontWeight: "bold", color: "var(--verde)" }}>
-            ${Number(estadisticas.ingresoTotal).toLocaleString("es-CL")}
+            ${Number(estadisticas.ingresoTotal as number).toLocaleString("es-CL")}
           </div>
         </div>
         <div className="card">
@@ -427,7 +474,7 @@ function VentasPorPeriodoView({ datos, estadisticas }: { datos: any[]; estadisti
             Promedio por Venta
           </h3>
           <div style={{ fontSize: "2rem", fontWeight: "bold", color: "var(--verde)" }}>
-            ${Number(estadisticas.promedioVenta).toLocaleString("es-CL", { maximumFractionDigits: 0 })}
+            ${Number(estadisticas.promedioVenta as number).toLocaleString("es-CL", { maximumFractionDigits: 0 })}
           </div>
         </div>
       </div>
@@ -474,7 +521,7 @@ function VentasPorPeriodoView({ datos, estadisticas }: { datos: any[]; estadisti
 }
 
 // Component: Clientes Nuevos Table
-function ClientesNuevosTable({ datos }: { datos: any[] }) {
+function ClientesNuevosTable({ datos }: { datos: ClienteData[] }) {
   if (!datos || datos.length === 0) {
     return (
       <div className="alert alert--info">
@@ -523,7 +570,7 @@ function ClientesNuevosTable({ datos }: { datos: any[] }) {
 }
 
 // Component: Top Clientes Table
-function TopClientesTable({ datos }: { datos: any[] }) {
+function TopClientesTable({ datos }: { datos: ClienteData[] }) {
   if (!datos || datos.length === 0) {
     return (
       <div className="alert alert--info">
@@ -549,7 +596,7 @@ function TopClientesTable({ datos }: { datos: any[] }) {
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="nombre" angle={-45} textAnchor="end" height={100} />
               <YAxis />
-              <Tooltip formatter={(value: any) => `$${Number(value).toLocaleString("es-CL")}`} />
+              <Tooltip formatter={(value: number) => `$${Number(value).toLocaleString("es-CL")}`} />
               <Legend />
               <Bar dataKey="monto" fill="#10b981" name="Monto Total" />
             </BarChart>
@@ -621,7 +668,7 @@ function TopClientesTable({ datos }: { datos: any[] }) {
                   ${Number(cliente.promedioCompra).toLocaleString("es-CL", { maximumFractionDigits: 0 })}
                 </td>
                 <td>
-                  {new Date(cliente.ultimaCompra).toLocaleDateString("es-CL", {
+                  {new Date(cliente.ultimaCompra || cliente.fechaCreacion).toLocaleDateString("es-CL", {
                     year: "numeric",
                     month: "short",
                     day: "numeric"

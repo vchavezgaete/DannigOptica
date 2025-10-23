@@ -7,7 +7,7 @@ export async function clienteRoutes(app: FastifyInstance) {
   app.addHook("preHandler", (app as any).authenticate);
 
   app.get("/", 
-    { preHandler: (app as any).authorize(["admin", "captador"]) },
+    { preHandler: (app as any).authorize(["admin", "captador", "oftalmologo"]) },
     async (req) => {
       const { rut } = (req.query ?? {}) as { rut?: string };
       const user = (req as any).user;
@@ -18,6 +18,7 @@ export async function clienteRoutes(app: FastifyInstance) {
       if (user.roles.includes("captador") && !user.roles.includes("admin")) {
         where.idVendedor = user.sub;
       }
+      // Si es oftalmólogo, puede ver todos los clientes (acceso clínico completo)
       
       // Si se proporciona RUT, buscar por RUT específico
       if (rut && rut.trim()) {
@@ -118,7 +119,7 @@ export async function clienteRoutes(app: FastifyInstance) {
 
   // GET /clientes/:id/historial - Obtener historial del cliente
   app.get("/:id/historial", 
-    { preHandler: (app as any).authorize(["admin", "captador"]) },
+    { preHandler: (app as any).authorize(["admin", "captador", "oftalmologo"]) },
     async (req, reply) => {
       const { id } = req.params as { id: string };
       const idCliente = Number(id);
@@ -139,11 +140,12 @@ export async function clienteRoutes(app: FastifyInstance) {
         }
 
         // Si es captador, verificar que el cliente le pertenece
-        if (user.roles.includes("captador") && !user.roles.includes("admin")) {
+        if (user.roles.includes("captador") && !user.roles.includes("admin") && !user.roles.includes("oftalmologo")) {
           if (cliente.idVendedor !== user.sub) {
             return reply.status(403).send({ error: "No tienes acceso a este cliente" });
           }
         }
+        // Si es oftalmólogo, puede ver historial de todos los clientes (acceso clínico completo)
 
         // Obtener citas del cliente
         const citas = await prisma.cita.findMany({

@@ -633,3 +633,14 @@ footer {
   white-space: nowrap;
   border: 0;
 }
+
+/* Estilos para campos de error */
+.form__input--error {
+  border-color: #dc2626 !important;
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.1) !important;
+}
+
+.form__input--error:focus {
+  border-color: #dc2626 !important;
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.25) !important;
+}

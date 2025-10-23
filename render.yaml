@@ -34,9 +34,16 @@ services:
         value: Captador
       - key: CAPTADOR_EMAIL
         value: captador@dannig.local
-      - key: CAPTADOR_PASSWORD
-        value: captador123
-        sync: false
+              - key: CAPTADOR_PASSWORD
+                value: captador123
+                sync: false
+              - key: OFTALMOLOGO_NAME
+                value: Dr. Oftalmólogo
+              - key: OFTALMOLOGO_EMAIL
+                value: oftalmologo@dannig.local
+              - key: OFTALMOLOGO_PASSWORD
+                value: oftalmologo123
+                sync: false
 
   # Frontend React
   - type: web

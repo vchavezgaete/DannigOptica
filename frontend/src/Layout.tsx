@@ -69,23 +69,24 @@ export default function Layout() {
           <NavLink to="/leads" className="nav__link">
             📋 Captación
           </NavLink>
-          {/* Clientes visible para captadores y admin */}
-          {(auth.hasRole('captador') || auth.hasRole('admin')) && (
-            <NavLink to="/clientes" className="nav__link">
-              👥 Clientes
-            </NavLink>
-          )}
-          {/* Solo admin ve estos módulos */}
-          {auth.hasRole('admin') && (
-            <>
-              <NavLink to="/appointments" className="nav__link">
-                📅 Citas
+            {/* Clientes visible para captadores, oftalmólogo y admin */}
+            {(auth.hasRole('captador') || auth.hasRole('oftalmologo') || auth.hasRole('admin')) && (
+              <NavLink to="/clientes" className="nav__link">
+                👥 Clientes
               </NavLink>
+            )}
+            {/* Agendamiento de horas visible para oftalmólogo y admin */}
+            {(auth.hasRole('oftalmologo') || auth.hasRole('admin')) && (
+              <NavLink to="/appointments" className="nav__link">
+                📅 Agendamiento de Horas
+              </NavLink>
+            )}
+            {/* Solo admin ve reportes */}
+            {auth.hasRole('admin') && (
               <NavLink to="/reportes" className="nav__link">
                 📊 Reportes
               </NavLink>
-            </>
-          )}
+            )}
         </div>
       </nav>
 

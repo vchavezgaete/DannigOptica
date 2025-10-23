@@ -10,7 +10,8 @@
     "start": "node dist/server.js",
     "db:migrate": "prisma migrate dev",
     "prisma:generate": "prisma generate",
-    "seed:demo": "ts-node scripts/seed-demo-data.ts"
+    "seed:demo": "ts-node scripts/seed-demo-data.ts",
+    "generate:clients": "ts-node scripts/generate-test-clients.ts"
   },
   "dependencies": {
     "@fastify/cors": "^8.5.0",

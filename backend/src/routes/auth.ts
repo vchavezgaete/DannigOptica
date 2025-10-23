@@ -18,6 +18,10 @@ export async function authRoutes(app: FastifyInstance) {
       const captadorEmail = process.env.CAPTADOR_EMAIL || "captador@dannig.local";
       const captadorPassword = process.env.CAPTADOR_PASSWORD || "captador123";
 
+      const oftalmologoName = process.env.OFTALMOLOGO_NAME || "Dr. Oftalmólogo";
+      const oftalmologoEmail = process.env.OFTALMOLOGO_EMAIL || "oftalmologo@dannig.local";
+      const oftalmologoPassword = process.env.OFTALMOLOGO_PASSWORD || "oftalmologo123";
+
       // Crear roles
       const adminRol = await prisma.rol.upsert({
         where: { nombre: "admin" },
@@ -29,6 +33,12 @@ export async function authRoutes(app: FastifyInstance) {
         where: { nombre: "captador" },
         update: {},
         create: { nombre: "captador" },
+      });
+
+      const oftalmologoRol = await prisma.rol.upsert({
+        where: { nombre: "oftalmologo" },
+        update: {},
+        create: { nombre: "oftalmologo" },
       });
 
       // Crear usuario admin
@@ -53,6 +63,19 @@ export async function authRoutes(app: FastifyInstance) {
           nombre: captadorName,
           correo: captadorEmail,
           hashPassword: captadorHash,
+          activo: 1,
+        },
+      });
+
+      // Crear usuario oftalmólogo
+      const oftalmologoHash = await bcrypt.hash(oftalmologoPassword, 10);
+      const oftalmologoUser = await prisma.usuario.upsert({
+        where: { correo: oftalmologoEmail },
+        update: { nombre: oftalmologoName, hashPassword: oftalmologoHash, activo: 1 },
+        create: {
+          nombre: oftalmologoName,
+          correo: oftalmologoEmail,
+          hashPassword: oftalmologoHash,
           activo: 1,
         },
       });
@@ -87,11 +110,27 @@ export async function authRoutes(app: FastifyInstance) {
         },
       });
 
+      // Asignar rol oftalmólogo
+      await prisma.usuarioRol.upsert({
+        where: {
+          idUsuario_idRol: {
+            idUsuario: oftalmologoUser.idUsuario,
+            idRol: oftalmologoRol.idRol,
+          },
+        },
+        update: {},
+        create: {
+          idUsuario: oftalmologoUser.idUsuario,
+          idRol: oftalmologoRol.idRol,
+        },
+      });
+
       return {
         ok: true,
         usuarios: [
           { id: adminUser.idUsuario, correo: adminUser.correo, rol: adminRol.nombre },
           { id: captadorUser.idUsuario, correo: captadorUser.correo, rol: captadorRol.nombre },
+          { id: oftalmologoUser.idUsuario, correo: oftalmologoUser.correo, rol: oftalmologoRol.nombre },
         ],
       };
     } catch (err: any) {

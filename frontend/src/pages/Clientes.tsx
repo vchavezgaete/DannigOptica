@@ -14,6 +14,26 @@ type Cliente = {
   fechaCreacion: string;
 };
 
+type HistorialData = {
+  cliente: {
+    nombre: string;
+    rut: string;
+  };
+  estadisticas: {
+    totalCitas: number;
+    citasConfirmadas: number;
+    citasCanceladas: number;
+  };
+  citas: Array<{
+    idCita: number;
+    fechaHora: string;
+    estado: string;
+    operativo?: {
+      nombre: string;
+    };
+  }>;
+};
+
 export default function Clientes() {
   const navigate = useNavigate();
   const auth = useContext(AuthContext);
@@ -23,7 +43,7 @@ export default function Clientes() {
   const [err, setErr] = useState<string | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showHistorialModal, setShowHistorialModal] = useState(false);
-  const [historialData, setHistorialData] = useState<any>(null);
+  const [historialData, setHistorialData] = useState<HistorialData | null>(null);
   const [editForm, setEditForm] = useState({
     nombre: "",
     telefono: "",
@@ -33,7 +53,8 @@ export default function Clientes() {
   });
 
   // Determine if user is captador
-  const isCaptador = auth?.hasRole('captador') && !auth?.hasRole('admin');
+  const isCaptador = auth?.hasRole('captador') && !auth?.hasRole('admin') && !auth?.hasRole('oftalmologo');
+  const isOftalmologo = auth?.hasRole('oftalmologo') && !auth?.hasRole('admin');
 
   async function buscar() {
     setErr(null); setCliente(null); setLoading(true);
@@ -57,7 +78,7 @@ export default function Clientes() {
       const { data } = await api.get(`/clientes/${cliente.idCliente}/historial`);
       setHistorialData(data);
       setShowHistorialModal(true);
-    } catch (error) {
+    } catch {
       setErr("Error cargando historial");
     } finally {
       setLoading(false);
@@ -88,7 +109,7 @@ export default function Clientes() {
       await buscar();
       setShowEditModal(false);
       setErr(null);
-    } catch (error) {
+    } catch {
       setErr("Error al actualizar cliente");
     } finally {
       setLoading(false);
@@ -127,17 +148,24 @@ export default function Clientes() {
       <div className="section">
         <div className="section__header">
           <h1 className="section__title">👥 Consulta de Clientes</h1>
-          <p className="section__subtitle">
-            {isCaptador 
-              ? "Busca información de los clientes que has captado"
-              : "Busca información detallada de tus clientes registrados"
-            }
-          </p>
-          {isCaptador && (
-            <div className="alert alert--info" style={{ marginTop: "1rem" }}>
-              <strong>📌 Nota:</strong> Como captador, solo puedes ver información de los clientes que tú has captado.
-            </div>
-          )}
+        <p className="section__subtitle">
+          {isCaptador
+            ? "Busca información de los clientes que has captado"
+            : isOftalmologo
+            ? "Consulta información clínica completa de todos los clientes"
+            : "Busca información detallada de tus clientes registrados"
+          }
+        </p>
+        {isCaptador && (
+          <div className="alert alert--info" style={{ marginTop: "1rem" }}>
+            <strong>📌 Nota:</strong> Como captador, solo puedes ver información de los clientes que tú has captado.
+          </div>
+        )}
+        {isOftalmologo && (
+          <div className="alert alert--info" style={{ marginTop: "1rem" }}>
+            <strong>🩺 Acceso Clínico:</strong> Como oftalmólogo, tienes acceso completo a la información de todos los clientes para consultas médicas.
+          </div>
+        )}
         </div>
       </div>
 
@@ -258,11 +286,11 @@ export default function Clientes() {
               <button 
                 className="btn btn--secondary btn--small"
                 onClick={() => {
-                  // Navegar a la página de citas con el cliente preseleccionado
+                  // Navegar a la página de agendamiento con el cliente preseleccionado
                   navigate(`/appointments?clienteId=${cliente.idCliente}&clienteNombre=${encodeURIComponent(cliente.nombre)}`);
                 }}
               >
-                📅 Agendar Cita
+                📅 Agendar Hora
               </button>
             )}
             {auth?.hasRole('admin') && (
@@ -271,6 +299,17 @@ export default function Clientes() {
                 onClick={abrirEditarModal}
               >
                 📝 Editar Información
+              </button>
+            )}
+            {auth?.hasRole('oftalmologo') && (
+              <button 
+                className="btn btn--primary btn--small"
+                onClick={() => {
+                  // TODO: Implementar consulta médica
+                  alert('Funcionalidad de consulta médica en desarrollo');
+                }}
+              >
+                🩺 Consulta Médica
               </button>
             )}
             <button 
@@ -460,7 +499,7 @@ export default function Clientes() {
                     </tr>
                   </thead>
                   <tbody>
-                    {historialData.citas.map((cita: any) => (
+                    {historialData.citas.map((cita) => (
                       <tr key={cita.idCita}>
                         <td>
                           {new Date(cita.fechaHora).toLocaleDateString('es-CL')}

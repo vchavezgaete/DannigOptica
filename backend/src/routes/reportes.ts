@@ -40,6 +40,9 @@ export async function reporteRoutes(app: FastifyInstance) {
         case "top-clientes":
           return await getTopClientes(fechaDesde, fechaHasta, limitNum);
         
+        case "horas-agendadas":
+          return await getHorasAgendadas(fechaDesde, fechaHasta, limitNum);
+        
         default:
           return reply.status(400).send({ 
             error: "Invalid report type",
@@ -48,7 +51,8 @@ export async function reporteRoutes(app: FastifyInstance) {
               "productos-mas-vendidos",
               "ventas-por-periodo",
               "clientes-nuevos",
-              "top-clientes"
+              "top-clientes",
+              "horas-agendadas"
             ]
           });
       }
@@ -323,6 +327,82 @@ async function getTopClientes(
     fechaHasta: fechaHasta || null,
     total: result.length,
     datos: result
+  };
+}
+
+// Reporte de horas agendadas
+async function getHorasAgendadas(fechaDesde?: string, fechaHasta?: string, limit: number = 10) {
+  const whereClause: any = {};
+  
+  if (fechaDesde || fechaHasta) {
+    whereClause.fechaHora = {};
+    if (fechaDesde) {
+      whereClause.fechaHora.gte = new Date(fechaDesde);
+    }
+    if (fechaHasta) {
+      whereClause.fechaHora.lte = new Date(fechaHasta);
+    }
+  }
+
+  const citas = await prisma.cita.findMany({
+    where: whereClause,
+    include: {
+      cliente: {
+        select: {
+          idCliente: true,
+          nombre: true,
+          rut: true,
+          telefono: true,
+          correo: true
+        }
+      }
+    },
+    orderBy: { fechaHora: "desc" },
+    take: limit
+  });
+
+  // Estadísticas adicionales
+  const totalCitas = await prisma.cita.count({ where: whereClause });
+  
+  const citasPorEstado = await prisma.cita.groupBy({
+    by: ["estado"],
+    where: whereClause,
+    _count: { estado: true }
+  });
+
+  const citasPorMes = await prisma.cita.groupBy({
+    by: ["fechaHora"],
+    where: whereClause,
+    _count: { fechaHora: true },
+    orderBy: { fechaHora: "desc" }
+  });
+
+  return {
+    tipo: "horas-agendadas",
+    fechaDesde: fechaDesde || null,
+    fechaHasta: fechaHasta || null,
+    total: totalCitas,
+    estadisticas: {
+      porEstado: citasPorEstado.map(item => ({
+        estado: item.estado,
+        cantidad: item._count.estado
+      })),
+      totalCitas: totalCitas
+    },
+    datos: citas.map(cita => ({
+      idCita: cita.idCita,
+      fechaHora: cita.fechaHora,
+      estado: cita.estado,
+      tipoConsulta: null, // Campo no disponible en el modelo actual
+      observaciones: null, // Campo no disponible en el modelo actual
+      cliente: {
+        idCliente: cita.cliente.idCliente,
+        nombre: cita.cliente.nombre,
+        rut: cita.cliente.rut,
+        telefono: cita.cliente.telefono,
+        correo: cita.cliente.correo
+      }
+    }))
   };
 }
 

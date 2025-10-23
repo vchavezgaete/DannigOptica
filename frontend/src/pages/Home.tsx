@@ -16,9 +16,9 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
 
-  // Determine if user is admin
-  const isAdmin = auth?.hasRole('admin');
+  // Determine user roles
   const isCaptador = auth?.hasRole('captador') && !auth?.hasRole('admin');
+  const isOftalmologo = auth?.hasRole('oftalmologo') && !auth?.hasRole('admin');
 
   useEffect(() => {
     (async () => {
@@ -83,6 +83,54 @@ export default function Home() {
     );
   }
 
+  // Si es oftalmólogo, mostrar mensaje específico
+  if (isOftalmologo) {
+    return (
+      <div className="grid">
+        <div className="section">
+          <div className="section__header">
+            <h1 className="section__title">🩺 Panel Oftalmológico</h1>
+            <p className="section__subtitle">
+              Acceso clínico completo al sistema Dannig Óptica
+            </p>
+          </div>
+          
+          <div className="alert alert--info" style={{ textAlign: "center", padding: "2rem" }}>
+            <h3 style={{ margin: "0 0 1rem", color: "var(--azul)" }}>
+              👨‍⚕️ Bienvenido Dr. Oftalmólogo
+            </h3>
+            <p style={{ margin: "0 0 1rem", fontSize: "1.1rem" }}>
+              Tienes acceso completo a la información clínica de todos los clientes.
+            </p>
+            <p style={{ margin: "0 0 1.5rem", color: "var(--texto-sec)" }}>
+              El módulo de Inicio contiene información administrativa que está disponible 
+              para administradores. Como oftalmólogo, puedes acceder a los módulos clínicos.
+            </p>
+            
+            <div style={{ 
+              background: "var(--gris)", 
+              padding: "1rem", 
+              borderRadius: "0.5rem",
+              margin: "1rem 0"
+            }}>
+              <h4 style={{ margin: "0 0 0.5rem", color: "var(--verde)" }}>
+                🩺 Módulos disponibles para ti:
+              </h4>
+              <ul style={{ margin: "0", textAlign: "left", display: "inline-block" }}>
+                <li><strong>Clientes:</strong> Consulta información clínica completa</li>
+                <li><strong>Agendamiento:</strong> Gestiona horas médicas y seguimiento</li>
+              </ul>
+            </div>
+            
+            <p style={{ margin: "1rem 0 0", fontSize: "0.9rem", color: "var(--texto-sec)" }}>
+              Para acceder al catálogo de productos, contacta al administrador del sistema.
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   if (loading) {
     return (
       <div className="loading">
@@ -119,12 +167,12 @@ export default function Home() {
             </p>
           </div>
           
-          <div className="card">
-            <h3 style={{ margin: "0 0 0.5rem", color: "var(--verde)" }}>📅 Citas</h3>
-            <p style={{ margin: 0, color: "var(--texto-sec)" }}>
-              Programa y administra las citas con los clientes captados
-            </p>
-          </div>
+                  <div className="card">
+                    <h3 style={{ margin: "0 0 0.5rem", color: "var(--verde)" }}>📅 Agendamiento</h3>
+                    <p style={{ margin: 0, color: "var(--texto-sec)" }}>
+                      Programa y administra las horas médicas con los clientes captados
+                    </p>
+                  </div>
           
           <div className="card">
             <h3 style={{ margin: "0 0 0.5rem", color: "var(--verde)" }}>👥 Clientes</h3>
