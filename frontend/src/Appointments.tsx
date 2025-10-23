@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { api } from "./api";
 
-type Lead = { idCliente: number; nombre: string };
+type Lead = { idCliente: number; nombre: string; rut: string };
 type Estado = "Programada" | "Confirmada" | "Cancelada" | "NoShow" | "Atendida";
 type EstadoInput = "pendiente" | "confirmada" | "cancelada" | "no-show";
 type Appointment = { idCita: number; fechaHora: string; estado: Estado; cliente?: Lead };
@@ -24,6 +24,59 @@ const ESTADO_INPUT_LABELS: Record<EstadoInput, string> = {
   "no-show": "No Asistió"
 };
 
+// Funciones para formatear RUT
+function limpiarRUT(rut: string): string {
+  return rut.replace(/[^0-9kK]/g, '');
+}
+
+function calcularDigitoVerificador(rut: string): string {
+  let suma = 0;
+  let multiplicador = 2;
+  
+  for (let i = rut.length - 1; i >= 0; i--) {
+    suma += parseInt(rut[i]) * multiplicador;
+    multiplicador = multiplicador === 7 ? 2 : multiplicador + 1;
+  }
+  
+  const resto = suma % 11;
+  const dv = 11 - resto;
+  
+  if (dv === 11) return '0';
+  if (dv === 10) return 'K';
+  return dv.toString();
+}
+
+function formatearRUT(rut: string): string {
+  const rutLimpio = limpiarRUT(rut);
+  
+  if (rutLimpio.length === 0) return '';
+  
+  if (rutLimpio.length > 8) {
+    const numero = rutLimpio.substring(0, 8);
+    const dv = calcularDigitoVerificador(numero);
+    return formatearRUTCompleto(numero + dv);
+  }
+  
+  if (rutLimpio.length === 8) {
+    const numero = rutLimpio;
+    const dv = calcularDigitoVerificador(numero);
+    return formatearRUTCompleto(numero + dv);
+  }
+  
+  return formatearRUTCompleto(rutLimpio);
+}
+
+function formatearRUTCompleto(rut: string): string {
+  const rutLimpio = limpiarRUT(rut);
+  
+  if (rutLimpio.length <= 1) return rutLimpio;
+  
+  const numero = rutLimpio.slice(0, -1);
+  const dv = rutLimpio.slice(-1).toUpperCase();
+  
+  return numero.replace(/\B(?=(\d{3})+(?!\d))/g, '.') + '-' + dv;
+}
+
 // Convierte Date -> "YYYY-MM-DDTHH:mm" (hora LOCAL)
 function toLocalInputValue(d: Date) {
   const two = (n: number) => n.toString().padStart(2, "0"); // <- tipado
@@ -37,11 +90,53 @@ export default function Appointments() {
   const [leadId, setLeadId] = useState<number | "">("");
   const [fechaHora, setFechaHora] = useState("");
   const [busy, setBusy] = useState(false);
+  
+  // Estados para búsqueda por RUT
+  const [rutBusqueda, setRutBusqueda] = useState("");
+  const [clienteEncontrado, setClienteEncontrado] = useState<Lead | null>(null);
+  const [buscandoCliente, setBuscandoCliente] = useState(false);
+  const [errorBusqueda, setErrorBusqueda] = useState<string | null>(null);
 
   const load = async () => {
     const [L, A] = await Promise.all([api.get<Lead[]>("/leads"), api.get<Appointment[]>("/appointments")]);
     setLeads(L.data);
     setAppts(A.data);
+  };
+
+  // Función para buscar cliente por RUT
+  const buscarClientePorRUT = async (rut: string) => {
+    if (!rut.trim()) {
+      setClienteEncontrado(null);
+      setErrorBusqueda(null);
+      return;
+    }
+
+    setBuscandoCliente(true);
+    setErrorBusqueda(null);
+    
+    try {
+      const rutFormateado = formatearRUT(rut);
+      const { data } = await api.get<Lead[]>("/leads", { 
+        params: { q: rutFormateado } 
+      });
+      
+      if (data && data.length > 0) {
+        const cliente = data[0]; // Tomar el primer resultado
+        setClienteEncontrado(cliente);
+        setLeadId(cliente.idCliente);
+        setErrorBusqueda(null);
+      } else {
+        setClienteEncontrado(null);
+        setLeadId("");
+        setErrorBusqueda("No se encontró ningún cliente con ese RUT");
+      }
+    } catch (error) {
+      setClienteEncontrado(null);
+      setLeadId("");
+      setErrorBusqueda("Error al buscar cliente");
+    } finally {
+      setBuscandoCliente(false);
+    }
   };
 
   useEffect(() => {
@@ -55,6 +150,12 @@ export default function Appointments() {
     const clienteId = searchParams.get('clienteId');
     if (clienteId) {
       setLeadId(Number(clienteId));
+      // Buscar el cliente en la lista para mostrar su información
+      const cliente = leads.find(l => l.idCliente === Number(clienteId));
+      if (cliente) {
+        setClienteEncontrado(cliente);
+        setRutBusqueda(cliente.rut);
+      }
     }
     
     load();
@@ -68,7 +169,13 @@ export default function Appointments() {
       // El navegador interpreta datetime-local como hora local; lo mandamos en ISO (UTC)
       const iso = new Date(fechaHora).toISOString();
       await api.post("/appointments", { leadId: Number(leadId), fechaHora: iso });
+      
+      // Limpiar formulario después de crear cita
       setLeadId("");
+      setRutBusqueda("");
+      setClienteEncontrado(null);
+      setErrorBusqueda(null);
+      
       // deja la fecha al mismo valor elegido para crear varias seguidas
       await load();
     } finally {
@@ -139,20 +246,61 @@ export default function Appointments() {
         <form onSubmit={create} className="form">
           <div className="form__row">
             <div className="form__group">
-              <label className="form__label">Cliente Captado *</label>
-              <select
-                className="form__input"
-                value={leadId}
-                onChange={(e) => setLeadId(e.target.value ? Number(e.target.value) : "")}
-                required
-              >
-                <option value="">Seleccione un cliente...</option>
-                {leads.map((l) => (
-                  <option key={l.idCliente} value={l.idCliente}>
-                    #{l.idCliente} — {l.nombre}
-                  </option>
-                ))}
-              </select>
+              <label className="form__label">Buscar Cliente por RUT *</label>
+              <div style={{ display: "flex", gap: "0.5rem", alignItems: "flex-start" }}>
+                <input
+                  type="text"
+                  className="form__input"
+                  placeholder="Ej: 12345678-9 o 12.345.678-9"
+                  value={rutBusqueda}
+                  onChange={(e) => {
+                    const valor = e.target.value;
+                    setRutBusqueda(valor);
+                    // Buscar automáticamente cuando el RUT esté completo
+                    if (valor.length >= 8) {
+                      buscarClientePorRUT(valor);
+                    } else {
+                      setClienteEncontrado(null);
+                      setLeadId("");
+                      setErrorBusqueda(null);
+                    }
+                  }}
+                  style={{ flex: 1 }}
+                />
+                <button
+                  type="button"
+                  onClick={() => buscarClientePorRUT(rutBusqueda)}
+                  disabled={buscandoCliente || !rutBusqueda.trim()}
+                  className="btn btn--secondary"
+                  style={{ whiteSpace: "nowrap" }}
+                >
+                  {buscandoCliente ? (
+                    <>
+                      <div className="loading__spinner" style={{ margin: 0, width: "1rem", height: "1rem" }}></div>
+                      Buscando...
+                    </>
+                  ) : (
+                    "🔍 Buscar"
+                  )}
+                </button>
+              </div>
+              
+              {/* Mostrar resultado de búsqueda */}
+              {clienteEncontrado && (
+                <div className="alert alert--success" style={{ marginTop: "0.5rem" }}>
+                  <strong>✅ Cliente encontrado:</strong> {clienteEncontrado.nombre}
+                  <br />
+                  <small>RUT: {clienteEncontrado.rut} | ID: #{clienteEncontrado.idCliente}</small>
+                </div>
+              )}
+              
+              {errorBusqueda && (
+                <div className="alert alert--error" style={{ marginTop: "0.5rem" }}>
+                  <strong>❌ {errorBusqueda}</strong>
+                  <br />
+                  <small>Verifica que el RUT esté correcto o que el cliente esté registrado en el sistema.</small>
+                </div>
+              )}
             </div>
 
             <div className="form__group">
@@ -169,7 +317,7 @@ export default function Appointments() {
 
           <button 
             type="submit"
-            disabled={busy || !leadId || !fechaHora} 
+            disabled={busy || !leadId || !fechaHora || !clienteEncontrado} 
             className="btn btn--primary"
           >
             {busy ? (

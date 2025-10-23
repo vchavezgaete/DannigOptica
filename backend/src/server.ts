@@ -4,6 +4,8 @@ import { authRoutes } from "./routes/auth";
 import { leadRoutes } from "./routes/leads";
 import { appointmentRoutes } from "./routes/appointments";
 import { clienteRoutes } from "./routes/clientes";
+import { fichaClinicaRoutes } from "./routes/fichas-clinicas";
+import { recetaRoutes } from "./routes/recetas";
 import authPlugin from "./plugins/auth";
 import { productoRoutes } from "./routes/productos";
 import { reporteRoutes } from "./routes/reportes";
@@ -39,7 +41,9 @@ app.get("/health", async (request, reply) => {
 app.register(authRoutes, { prefix: "/auth" });
 app.register(leadRoutes, { prefix: "/leads" });
 app.register(appointmentRoutes, { prefix: "/appointments" });
-app.register(clienteRoutes, { prefix: "/clientes" }); // ← asegúrate de que exista este archivo y export
+app.register(clienteRoutes, { prefix: "/clientes" });
+app.register(fichaClinicaRoutes, { prefix: "/fichas-clinicas" });
+app.register(recetaRoutes, { prefix: "/recetas" });
 app.register(productoRoutes, { prefix: "/productos" });
 app.register(reporteRoutes, { prefix: "/reportes" });
 

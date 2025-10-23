@@ -81,6 +81,12 @@ export default function Layout() {
                 📅 Agendamiento de Horas
               </NavLink>
             )}
+            {/* Módulo oftalmólogo visible solo para oftalmólogos y admin */}
+            {(auth.hasRole('oftalmologo') || auth.hasRole('admin')) && (
+              <NavLink to="/oftalmologo" className="nav__link">
+                🩺 Oftalmólogo
+              </NavLink>
+            )}
             {/* Solo admin ve reportes */}
             {auth.hasRole('admin') && (
               <NavLink to="/reportes" className="nav__link">

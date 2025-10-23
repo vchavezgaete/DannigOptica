@@ -11,6 +11,7 @@ import Appointments from "./Appointments";
 import AuthProvider from "./auth/AuthProvider"; 
 import Clientes from "./pages/Clientes";
 import Reportes from "./pages/Reportes";
+import Oftalmologo from "./pages/Oftalmologo";
 import "./index.css";
 
 
@@ -35,6 +36,14 @@ const router = createBrowserRouter([
                 )
               },
       { path: "clientes", element: <Clientes /> },
+      { 
+        path: "oftalmologo", 
+        element: (
+          <RoleProtectedRoute requiredRole="oftalmologo">
+            <Oftalmologo />
+          </RoleProtectedRoute>
+        )
+      },
       { 
         path: "reportes", 
         element: (
