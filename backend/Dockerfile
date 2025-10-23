@@ -24,11 +24,6 @@ RUN npx prisma generate
 # Compilar TypeScript a dist
 RUN npm run build
 
-# Copiar scripts de inicialización
-COPY scripts/init.sh ./scripts/init.sh
-COPY scripts/start-production.sh ./scripts/start-production.sh
-RUN chmod +x ./scripts/init.sh ./scripts/start-production.sh
-
 # Exponer puerto
 EXPOSE 3001
 
@@ -36,5 +31,5 @@ EXPOSE 3001
 ENV NODE_ENV=production
 ENV PORT=3001
 
-# Usar script de inicialización robusto
-CMD ["./scripts/start-production.sh"]
+# Comando de inicialización robusto integrado
+CMD ["sh", "-c", "echo '🚀 Iniciando DannigOptica Backend...' && echo '📊 Verificando configuración de base de datos...' && if [[ \"$DATABASE_URL\" == *\"postgresql\"* ]] || [[ \"$NODE_ENV\" == \"production\" ]]; then echo '🐘 PostgreSQL detectado en producción' && echo '⚙️ Generando cliente Prisma para PostgreSQL...' && npx prisma generate --schema=./prisma/schema.prisma && echo '🔄 Aplicando migraciones a PostgreSQL...' && for i in {1..3}; do echo \"Intento \$i de migración...\"; if npx prisma db push --accept-data-loss --schema=./prisma/schema.prisma; then echo '✅ Migración PostgreSQL completada exitosamente'; break; else echo \"❌ Intento \$i falló, reintentando...\"; sleep 5; fi; done; else echo '🐬 MySQL detectado en desarrollo' && if nslookup mysql >/dev/null 2>&1; then echo '✅ Host mysql encontrado, esperando conexión...' && until nc -z mysql 3306; do echo '⏳ Esperando MySQL...'; sleep 2; done && echo '✅ MySQL disponible'; else echo '⚠️ Host mysql no encontrado, saltando verificación'; fi && echo '⚙️ Generando cliente Prisma para MySQL...' && npx prisma generate --schema=./prisma/schema.prisma && echo '🔄 Sincronizando schema MySQL...' && npx prisma db push --accept-data-loss --schema=./prisma/schema.prisma && echo '✅ Schema MySQL sincronizado exitosamente'; fi && echo '🎯 Iniciando servidor Node.js...' && node dist/server.js"]
