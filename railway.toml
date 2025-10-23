@@ -10,7 +10,7 @@ numReplicas = 1
 restartPolicyType = "ON_FAILURE"
 restartPolicyMaxRetries = 10
 healthcheckPath = "/health"
-healthcheckTimeout = 300
+healthcheckTimeout = 600  # 10 minutos para inicialización completa
 startCommand = "node dist/server.js"
 
 # Variables de entorno para Railway

@@ -10,7 +10,7 @@ services:
     dockerContext: ./backend
     plan: free  # Cambia a 'starter' para más recursos
     healthCheckPath: /health
-    healthCheckTimeout: 300
+    healthCheckTimeout: 600  # 10 minutos para inicialización completa
     envVars:
       - key: DATABASE_URL
         fromDatabase:
