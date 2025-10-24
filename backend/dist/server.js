@@ -16,10 +16,7 @@ const productos_1 = require("./routes/productos");
 const reportes_1 = require("./routes/reportes");
 const app = (0, fastify_1.default)({
     logger: {
-        level: 'info',
-        transport: {
-            target: 'pino-pretty'
-        }
+        level: 'info'
     }
 });
 // Registrar CORS una sola vez

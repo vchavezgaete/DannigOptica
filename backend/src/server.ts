@@ -13,10 +13,7 @@ import { prisma } from "./db";
 
 const app = Fastify({ 
   logger: {
-    level: 'info',
-    transport: {
-      target: 'pino-pretty'
-    }
+    level: 'info'
   }
 });
 
