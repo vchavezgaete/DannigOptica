@@ -5,6 +5,8 @@ const db_1 = require("../db");
 async function productoRoutes(app) {
     // 🔐 Requiere JWT en todas las rutas
     app.addHook("preHandler", app.authenticate);
+    // 🔒 Solo admin puede acceder a productos
+    app.addHook("preHandler", app.authorize(["admin"]));
     // GET /productos
     app.get("/", async () => {
         const productos = await db_1.prisma.producto.findMany({

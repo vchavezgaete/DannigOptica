@@ -24,6 +24,8 @@ function mapEstado(input) {
 async function appointmentRoutes(app) {
     // 🔐 Requiere JWT en todas las rutas de este módulo
     app.addHook("preHandler", app.authenticate);
+    // 🔒 Admin y oftalmólogo pueden acceder a appointments
+    app.addHook("preHandler", app.authorize(["admin", "oftalmologo"]));
     // ── Schemas (compat: aceptamos leadId o clienteId)
     const createSchema = zod_1.z.object({
         // compat viejo:

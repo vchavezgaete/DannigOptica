@@ -19,6 +19,26 @@ app.register(cors, { origin: true });
 // Registrar plugin de auth (JWT) una vez
 app.register(authPlugin);
 
+// Root endpoint para Railway
+app.get("/", async (request, reply) => {
+  return reply.code(200).send({
+    message: "DannigOptica API",
+    version: "1.0.0",
+    status: "running",
+    environment: process.env.NODE_ENV || "development",
+    timestamp: new Date().toISOString(),
+    endpoints: {
+      health: "/health",
+      auth: "/auth",
+      leads: "/leads",
+      appointments: "/appointments",
+      clientes: "/clientes",
+      productos: "/productos",
+      reportes: "/reportes"
+    }
+  });
+});
+
 // Health check endpoint simple y robusto
 app.get("/health", async (request, reply) => {
   // Health check simple que siempre responde 200

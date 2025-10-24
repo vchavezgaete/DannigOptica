@@ -6,10 +6,15 @@ async function leadRoutes(app) {
     // 🔐 Todas las rutas requieren token
     app.addHook("preHandler", app.authenticate);
     // GET /leads  → lista clientes (opcional: ?q=texto&limit=100)
-    app.get("/", { preHandler: app.authorize(["admin", "operador"]) }, async (req) => {
+    app.get("/", { preHandler: app.authorize(["admin", "captador"]) }, async (req) => {
         const { q, limit } = (req.query ?? {});
+        const user = req.user;
         const take = Math.min(Math.max(Number(limit) || 100, 1), 500);
         const where = {};
+        // Si es captador, solo ver sus propios leads captados
+        if (user.roles.includes("captador") && !user.roles.includes("admin")) {
+            where.idVendedor = user.sub;
+        }
         if (q && q.trim()) {
             where.OR = [
                 { nombre: { contains: q } },
@@ -26,10 +31,11 @@ async function leadRoutes(app) {
         });
     });
     // POST /leads  → crea cliente
-    app.post("/", { preHandler: app.authorize(["admin"]) }, async (req, reply) => {
+    app.post("/", { preHandler: app.authorize(["admin", "captador"]) }, async (req, reply) => {
         const { nombre, documento, contacto, direccion, sector,
         // observaciones se ignora porque no existe en la tabla 'cliente'
          } = (req.body ?? {});
+        const user = req.user;
         if (!nombre) {
             return reply.code(400).send({ error: "nombre es requerido" });
         }
@@ -54,6 +60,7 @@ async function leadRoutes(app) {
                     correo,
                     direccion: direccion ?? null,
                     sector: sector ?? null,
+                    idVendedor: user.sub, // Asignar automáticamente el usuario que crea el lead
                 },
             });
             return reply.code(201).send(nuevo);
