@@ -134,6 +134,7 @@ export default function Appointments() {
       setClienteEncontrado(null);
       setLeadId("");
       setErrorBusqueda("Error al buscar cliente");
+      console.error("Error buscando cliente:", error);
     } finally {
       setBuscandoCliente(false);
     }
@@ -146,9 +147,13 @@ export default function Appointments() {
     now.setMinutes(now.getMinutes() + add, 0, 0);
     setFechaHora(toLocalInputValue(now));
     
+    load();
+  }, []);
+
+  useEffect(() => {
     // Preseleccionar cliente si viene de URL
     const clienteId = searchParams.get('clienteId');
-    if (clienteId) {
+    if (clienteId && leads.length > 0) {
       setLeadId(Number(clienteId));
       // Buscar el cliente en la lista para mostrar su información
       const cliente = leads.find(l => l.idCliente === Number(clienteId));
@@ -157,9 +162,7 @@ export default function Appointments() {
         setRutBusqueda(cliente.rut);
       }
     }
-    
-    load();
-  }, [searchParams]);
+  }, [searchParams, leads]);
 
   const create = async (e: React.FormEvent) => {
     e.preventDefault();

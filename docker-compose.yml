@@ -47,6 +47,14 @@ services:
       - ADMIN_NAME=Admin
       - ADMIN_EMAIL=admin@dannig.local
       - ADMIN_PASSWORD=admin123
+      # Captador user credentials
+      - CAPTADOR_NAME=Captador
+      - CAPTADOR_EMAIL=captador@dannig.local
+      - CAPTADOR_PASSWORD=captador123
+      # Oftalmólogo user credentials
+      - OFTALMOLOGO_NAME=Dr. Oftalmólogo
+      - OFTALMOLOGO_EMAIL=oftalmologo@dannig.local
+      - OFTALMOLOGO_PASSWORD=oftalmologo123
     ports:
       - "3001:3001"
     depends_on:

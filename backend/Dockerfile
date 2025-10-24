@@ -46,15 +46,15 @@ CMD echo '🚀 Iniciando DannigOptica Backend...' && \
     if [ -z "$JWT_SECRET" ]; then echo '❌ ERROR: JWT_SECRET no está configurada' && exit 1; else echo '✅ JWT_SECRET configurada'; fi && \
     echo '🎯 Todas las variables de entorno están configuradas correctamente' && \
     echo '📊 Verificando configuración de base de datos...' && \
-    if [ "$NODE_ENV" = "production" ] || echo "$DATABASE_URL" | grep -q "postgresql"; then \
-        echo '🐘 PostgreSQL detectado en producción' && \
+    if echo "$DATABASE_URL" | grep -q "postgresql"; then \
+        echo '🐘 PostgreSQL detectado' && \
         echo '⚙️ Generando cliente Prisma para PostgreSQL...' && \
         npx prisma generate --schema=./prisma/schema.prisma && \
         echo '🔄 Aplicando migraciones a PostgreSQL...' && \
         npx prisma db push --accept-data-loss --schema=./prisma/schema.prisma && \
         echo '✅ Migración PostgreSQL completada exitosamente'; \
     else \
-        echo '🐬 MySQL detectado en desarrollo' && \
+        echo '🐬 MySQL detectado' && \
         echo '⚙️ Generando cliente Prisma para MySQL...' && \
         npx prisma generate --schema=./prisma/schema.prisma && \
         echo '🔄 Sincronizando schema MySQL...' && \

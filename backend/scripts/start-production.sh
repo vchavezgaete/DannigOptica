@@ -9,8 +9,8 @@ echo "🚀 Iniciando DannigOptica Backend..."
 echo "📊 Verificando configuración de base de datos..."
 
 # Detectar tipo de base de datos
-if [[ "$DATABASE_URL" == *"postgresql"* ]] || [[ "$NODE_ENV" == "production" ]]; then
-    echo "🐘 PostgreSQL detectado en producción"
+if [[ "$DATABASE_URL" == *"postgresql"* ]]; then
+    echo "🐘 PostgreSQL detectado"
     
     # Generar cliente Prisma para PostgreSQL
     echo "⚙️ Generando cliente Prisma para PostgreSQL..."
@@ -30,7 +30,7 @@ if [[ "$DATABASE_URL" == *"postgresql"* ]] || [[ "$NODE_ENV" == "production" ]];
     done
     
 else
-    echo "🐬 MySQL detectado en desarrollo"
+    echo "🐬 MySQL detectado"
     
     # Verificar si el host mysql existe
     if nslookup mysql >/dev/null 2>&1; then
