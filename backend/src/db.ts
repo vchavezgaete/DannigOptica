@@ -11,7 +11,7 @@ try {
     console.log('🔗 DATABASE_URL:', maskDatabaseUrl(databaseUrl));
   }
 } catch (error) {
-  console.error('❌ Error resolviendo DATABASE_URL:', error.message);
+  console.error('❌ Error resolviendo DATABASE_URL:', error instanceof Error ? error.message : String(error));
   process.exit(1);
 }
 
