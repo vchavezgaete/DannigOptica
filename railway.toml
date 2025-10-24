@@ -1,4 +1,4 @@
-# Railway Configuration
+# Railway Configuration - DannigOptica Backend
 # Documentación: https://docs.railway.app/deploy/config-as-code
 
 [build]
@@ -28,6 +28,17 @@ OFTALMOLOGO_NAME = "Dr. Oftalmólogo"
 OFTALMOLOGO_EMAIL = "oftalmologo@dannig.local"
 OFTALMOLOGO_PASSWORD = "oftalmologo123"
 
-# NOTA: DATABASE_URL debe configurarse manualmente en Railway Dashboard
-# ya que contiene información sensible de conexión a la base de datos
-
+# NOTA IMPORTANTE: DATABASE_URL debe configurarse manualmente en Railway Dashboard
+# 
+# PASOS PARA CONFIGURAR MYSQL EN RAILWAY:
+# 1. En Railway Dashboard, crear un nuevo servicio
+# 2. Seleccionar "Database" → "Add MySQL" (NO PostgreSQL)
+# 3. Copiar la DATABASE_URL generada
+# 4. En el servicio backend, agregar variable:
+#    - Key: DATABASE_URL
+#    - Value: mysql://usuario:password@host:port/database
+#
+# FORMATO ESPERADO:
+# mysql://usuario:password@host:3306/database_name
+#
+# Si Railway genera una URL sin protocolo, el script fix-database-url.sh la corregirá automáticamente

@@ -28,7 +28,8 @@ RUN npm run build
 COPY scripts/init.sh ./scripts/init.sh
 COPY scripts/start-production.sh ./scripts/start-production.sh
 COPY scripts/validate-env.sh ./scripts/validate-env.sh
-RUN chmod +x ./scripts/init.sh ./scripts/start-production.sh ./scripts/validate-env.sh
+COPY scripts/fix-database-url.sh ./scripts/fix-database-url.sh
+RUN chmod +x ./scripts/init.sh ./scripts/start-production.sh ./scripts/validate-env.sh ./scripts/fix-database-url.sh
 
 # Exponer puerto
 EXPOSE 3001
@@ -39,6 +40,7 @@ ENV PORT=3001
 
 # Comando de inicialización con validación integrada
 CMD echo '🚀 Iniciando DannigOptica Backend...' && \
+    ./scripts/fix-database-url.sh && \
     echo '🔍 Validando variables de entorno...' && \
     if [ -z "$DATABASE_URL" ]; then echo '❌ ERROR: DATABASE_URL no está configurada' && exit 1; else echo '✅ DATABASE_URL configurada'; fi && \
     if [ -z "$NODE_ENV" ]; then echo '⚠️ WARNING: NODE_ENV no está configurada, usando development' && export NODE_ENV=development; else echo '✅ NODE_ENV: '$NODE_ENV; fi && \
