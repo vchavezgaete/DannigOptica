@@ -37,13 +37,5 @@ EXPOSE 3001
 ENV NODE_ENV=production
 ENV PORT=3001
 
-# Comando de inicialización simplificado
-CMD echo '🚀 Iniciando DannigOptica Backend...' && \
-    echo '🔍 Validando variables de entorno básicas...' && \
-    if [ -z "$DATABASE_URL" ]; then echo '❌ ERROR: DATABASE_URL no está configurada' && exit 1; else echo '✅ DATABASE_URL configurada'; fi && \
-    if [ -z "$NODE_ENV" ]; then echo '⚠️ WARNING: NODE_ENV no está configurada, usando development' && export NODE_ENV=development; else echo '✅ NODE_ENV: '$NODE_ENV; fi && \
-    if [ -z "$PORT" ]; then echo '⚠️ WARNING: PORT no está configurada, usando 3001' && export PORT=3001; else echo '✅ PORT: '$PORT; fi && \
-    if [ -z "$JWT_SECRET" ]; then echo '❌ ERROR: JWT_SECRET no está configurada' && exit 1; else echo '✅ JWT_SECRET configurada'; fi && \
-    echo '🎯 Variables de entorno básicas validadas' && \
-    echo '📊 Iniciando aplicación Node.js...' && \
-    node dist/server.js
+# Comando de inicio simplificado
+CMD ["npm", "start"]

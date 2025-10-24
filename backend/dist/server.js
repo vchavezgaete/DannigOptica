@@ -14,7 +14,14 @@ const recetas_1 = require("./routes/recetas");
 const auth_2 = __importDefault(require("./plugins/auth"));
 const productos_1 = require("./routes/productos");
 const reportes_1 = require("./routes/reportes");
-const app = (0, fastify_1.default)({ logger: true });
+const app = (0, fastify_1.default)({
+    logger: {
+        level: 'info',
+        transport: {
+            target: 'pino-pretty'
+        }
+    }
+});
 // Registrar CORS una sola vez
 app.register(cors_1.default, { origin: true });
 // Registrar plugin de auth (JWT) una vez
@@ -63,11 +70,33 @@ app.register(fichas_clinicas_1.fichaClinicaRoutes, { prefix: "/fichas-clinicas" 
 app.register(recetas_1.recetaRoutes, { prefix: "/recetas" });
 app.register(productos_1.productoRoutes, { prefix: "/productos" });
 app.register(reportes_1.reporteRoutes, { prefix: "/reportes" });
-const PORT = 3001;
-app
-    .listen({ port: PORT, host: "0.0.0.0" })
-    .then(() => console.log(`🚀 API running on http://localhost:${PORT}`))
-    .catch((err) => {
-    app.log.error(err);
+const PORT = process.env.PORT || 3001;
+const HOST = "0.0.0.0";
+// Manejo de errores global
+process.on('uncaughtException', (error) => {
+    console.error('❌ Uncaught Exception:', error);
     process.exit(1);
 });
+process.on('unhandledRejection', (reason, promise) => {
+    console.error('❌ Unhandled Rejection at:', promise, 'reason:', reason);
+    process.exit(1);
+});
+// Inicializar servidor con manejo robusto de errores
+async function startServer() {
+    try {
+        console.log('🚀 Iniciando DannigOptica Backend...');
+        console.log('🔍 Variables de entorno:');
+        console.log(`   - NODE_ENV: ${process.env.NODE_ENV || 'development'}`);
+        console.log(`   - PORT: ${PORT}`);
+        console.log(`   - DATABASE_URL: ${process.env.DATABASE_URL ? 'configurada' : 'no configurada'}`);
+        console.log(`   - JWT_SECRET: ${process.env.JWT_SECRET ? 'configurada' : 'no configurada'}`);
+        await app.listen({ port: Number(PORT), host: HOST });
+        console.log(`🚀 API running on http://${HOST}:${PORT}`);
+        console.log('✅ Servidor iniciado exitosamente');
+    }
+    catch (err) {
+        console.error('❌ Error al iniciar servidor:', err);
+        process.exit(1);
+    }
+}
+startServer();
