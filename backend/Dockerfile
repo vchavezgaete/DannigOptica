@@ -37,19 +37,8 @@ EXPOSE 3001
 ENV NODE_ENV=production
 ENV PORT=3001
 
-# Comando de inicialización con validación integrada
+# Comando de inicialización simplificado
 CMD echo '🚀 Iniciando DannigOptica Backend...' && \
-    echo '🔧 Verificando y corrigiendo DATABASE_URL...' && \
-    if [ -z "$DATABASE_URL" ]; then echo '❌ ERROR: DATABASE_URL no está configurada' && exit 1; fi && \
-    echo '📋 DATABASE_URL original: '$DATABASE_URL && \
-    echo '🔧 Extrayendo URL limpia de DATABASE_URL...' && \
-    export DATABASE_URL=$(echo "$DATABASE_URL" | grep -o 'DATABASE_URL=[^[:space:]]*' | sed 's/DATABASE_URL=//') && \
-    echo '📋 DATABASE_URL limpia: '$DATABASE_URL && \
-    if [[ "$DATABASE_URL" == mysql://* ]]; then echo '✅ DATABASE_URL ya tiene el protocolo correcto'; \
-    elif [[ "$DATABASE_URL" == *"mysql"* ]]; then echo '🔧 Corrigiendo DATABASE_URL...' && export DATABASE_URL="mysql://$DATABASE_URL" && echo '✅ DATABASE_URL corregida: '$DATABASE_URL; \
-    elif [[ "$DATABASE_URL" == *"postgresql"* ]] || [[ "$DATABASE_URL" == *"postgres"* ]]; then echo '❌ ERROR: Se requiere MySQL, pero se detectó PostgreSQL. En Railway Dashboard, crear una base de datos MySQL específicamente' && exit 1; \
-    else echo '❌ ERROR: DATABASE_URL no tiene un formato reconocido. Formato esperado: mysql://usuario:password@host:port/database' && exit 1; fi && \
-    echo '✅ DATABASE_URL validada correctamente' && \
     echo '🔍 Validando variables de entorno...' && \
     if [ -z "$DATABASE_URL" ]; then echo '❌ ERROR: DATABASE_URL no está configurada' && exit 1; else echo '✅ DATABASE_URL configurada'; fi && \
     if [ -z "$NODE_ENV" ]; then echo '⚠️ WARNING: NODE_ENV no está configurada, usando development' && export NODE_ENV=development; else echo '✅ NODE_ENV: '$NODE_ENV; fi && \
