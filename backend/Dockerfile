@@ -28,7 +28,8 @@ RUN npm run build
 COPY scripts/init.sh ./scripts/init.sh
 COPY scripts/start-production.sh ./scripts/start-production.sh
 COPY scripts/validate-env.sh ./scripts/validate-env.sh
-RUN chmod +x ./scripts/init.sh ./scripts/start-production.sh ./scripts/validate-env.sh
+COPY scripts/extract-database-url.sh ./scripts/extract-database-url.sh
+RUN chmod +x ./scripts/init.sh ./scripts/start-production.sh ./scripts/validate-env.sh ./scripts/extract-database-url.sh
 
 # Exponer puerto
 EXPOSE 3001
@@ -42,9 +43,7 @@ CMD echo '🚀 Iniciando DannigOptica Backend...' && \
     echo '🔧 Verificando y corrigiendo DATABASE_URL...' && \
     if [ -z "$DATABASE_URL" ]; then echo '❌ ERROR: DATABASE_URL no está configurada' && exit 1; fi && \
     echo '📋 DATABASE_URL original: '$DATABASE_URL && \
-    echo '🔧 Extrayendo URL limpia de DATABASE_URL...' && \
-    export DATABASE_URL=$(echo "$DATABASE_URL" | sed 's/DATABASE_URL=//' | sed 's/ NODE_ENV.*//' | sed 's/ PORT.*//' | sed 's/ JWT_SECRET.*//' | sed 's/ ADMIN_NAME.*//' | sed 's/ ADMIN_EMAIL.*//' | sed 's/ ADMIN_PASSWORD.*//' | sed 's/ CAPTADOR_NAME.*//' | sed 's/ CAPTADOR_EMAIL.*//' | sed 's/ CAPTADOR_PASSWORD.*//' | sed 's/ OFTALMOLOGO_NAME.*//' | sed 's/ OFTALMOLOGO_EMAIL.*//' | sed 's/ OFTALMOLOGO_PASSWORD.*//') && \
-    echo '📋 DATABASE_URL limpia: '$DATABASE_URL && \
+    ./scripts/extract-database-url.sh && \
     if [[ "$DATABASE_URL" == mysql://* ]]; then echo '✅ DATABASE_URL ya tiene el protocolo correcto'; \
     elif [[ "$DATABASE_URL" == *"mysql"* ]]; then echo '🔧 Corrigiendo DATABASE_URL...' && export DATABASE_URL="mysql://$DATABASE_URL" && echo '✅ DATABASE_URL corregida: '$DATABASE_URL; \
     elif [[ "$DATABASE_URL" == *"postgresql"* ]] || [[ "$DATABASE_URL" == *"postgres"* ]]; then echo '❌ ERROR: Se requiere MySQL, pero se detectó PostgreSQL. En Railway Dashboard, crear una base de datos MySQL específicamente' && exit 1; \
