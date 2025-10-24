@@ -13,7 +13,7 @@ RUN npm install
 # Copiar código fuente
 COPY . .
 
-# Construir la aplicación
+# Construir la aplicación con variables de entorno
 RUN npm run build
 
 # Etapa de producción con nginx
