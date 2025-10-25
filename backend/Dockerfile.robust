@@ -1,4 +1,4 @@
-# Backend Dockerfile para Dannig Óptica
+# Backend Dockerfile para Dannig Óptica - Versión Robusta
 FROM node:18-alpine
 
 # Establecer directorio de trabajo
@@ -24,12 +24,18 @@ RUN npx prisma generate
 # Compilar TypeScript a dist
 RUN npm run build
 
-# Crear directorio de scripts y copiar archivos individualmente
+# Crear directorio de scripts
 RUN mkdir -p ./scripts
+
+# Copiar scripts de inicialización uno por uno con verificación
 COPY scripts/init.sh ./scripts/init.sh
 COPY scripts/start-production.sh ./scripts/start-production.sh
 COPY scripts/validate-env.sh ./scripts/validate-env.sh
-RUN chmod +x ./scripts/init.sh ./scripts/start-production.sh ./scripts/validate-env.sh
+
+# Verificar que los scripts existen y dar permisos de ejecución
+RUN ls -la ./scripts/ && \
+    chmod +x ./scripts/init.sh ./scripts/start-production.sh ./scripts/validate-env.sh && \
+    echo "✅ Scripts copiados y configurados correctamente"
 
 # Exponer puerto
 EXPOSE 3001
