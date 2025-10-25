@@ -1,7 +1,7 @@
 # Railway configuration for Dannig Óptica Backend
 [build]
 builder = "dockerfile"
-dockerfilePath = "backend/Dockerfile.railway"
+dockerfilePath = "backend/Dockerfile.railway-optimized"
 
 [deploy]
 startCommand = "npm start"
