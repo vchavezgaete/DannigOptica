@@ -1,44 +1,14 @@
-# Railway Configuration - DannigOptica Backend
-# Documentación: https://docs.railway.app/deploy/config-as-code
-
+# Railway configuration for Dannig Óptica Backend
 [build]
-builder = "DOCKERFILE"
+builder = "dockerfile"
 dockerfilePath = "backend/Dockerfile"
 
 [deploy]
-numReplicas = 1
-restartPolicyType = "ON_FAILURE"
-restartPolicyMaxRetries = 10
+startCommand = "npm start"
 healthcheckPath = "/health"
-healthcheckTimeout = 600  # 10 minutos para inicialización completa
-startCommand = "node dist/server.js"
+healthcheckTimeout = 300
+restartPolicyType = "on_failure"
 
-# Variables de entorno para Railway
-[deploy.env]
+[env]
 NODE_ENV = "production"
 PORT = "3001"
-JWT_SECRET = "d0e7a1e93a8d71b37105ffa0038035c5ed9f33d5ff3c57ea0c4d101ac6e8ebbd08743882ae2f8b747a7eaeef8d7b2891b62c9606c5237a8b1ed8c0f6b0af182c"
-ADMIN_NAME = "Admin"
-ADMIN_EMAIL = "admin@dannig.local"
-ADMIN_PASSWORD = "admin123"
-CAPTADOR_NAME = "Captador"
-CAPTADOR_EMAIL = "captador@dannig.local"
-CAPTADOR_PASSWORD = "captador123"
-OFTALMOLOGO_NAME = "Dr. Oftalmólogo"
-OFTALMOLOGO_EMAIL = "oftalmologo@dannig.local"
-OFTALMOLOGO_PASSWORD = "oftalmologo123"
-
-# NOTA IMPORTANTE: DATABASE_URL debe configurarse manualmente en Railway Dashboard
-# 
-# PASOS PARA CONFIGURAR MYSQL EN RAILWAY:
-# 1. En Railway Dashboard, crear un nuevo servicio
-# 2. Seleccionar "Database" → "Add MySQL" (NO PostgreSQL)
-# 3. Copiar la DATABASE_URL generada
-# 4. En el servicio backend, agregar variable:
-#    - Key: DATABASE_URL
-#    - Value: mysql://usuario:password@host:port/database
-#
-# FORMATO ESPERADO:
-# mysql://usuario:password@host:3306/database_name
-#
-# Si Railway genera una URL sin protocolo, el script fix-database-url.sh la corregirá automáticamente
