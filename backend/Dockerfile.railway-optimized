@@ -56,6 +56,9 @@ RUN chmod +x ./scripts/start-production.sh
 COPY scripts/validate-env.sh ./scripts/validate-env.sh
 RUN chmod +x ./scripts/validate-env.sh
 
+COPY scripts/railway-init.sh ./scripts/railway-init.sh
+RUN chmod +x ./scripts/railway-init.sh
+
 # Verificación final
 RUN ls -la ./scripts/ && echo "✅ Todos los scripts están presentes"
 
@@ -65,5 +68,5 @@ RUN rm -rf src/ tsconfig.json
 # Exponer puerto
 EXPOSE 3001
 
-# Comando de inicio
-CMD ["npm", "start"]
+# Comando de inicio con inicialización automática
+CMD ["./scripts/railway-init.sh"]

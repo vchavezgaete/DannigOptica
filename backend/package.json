@@ -8,7 +8,9 @@
     "dev:debug": "ts-node-dev --inspect=9229 --respawn src/server.ts",
     "build": "tsc",
     "start": "node dist/server.js",
+    "postinstall": "prisma generate",
     "db:migrate": "prisma migrate dev",
+    "db:deploy": "prisma migrate deploy",
     "prisma:generate": "prisma generate",
     "seed:demo": "ts-node scripts/seed-demo-data.ts",
     "generate:clients": "ts-node scripts/generate-test-clients.ts"
