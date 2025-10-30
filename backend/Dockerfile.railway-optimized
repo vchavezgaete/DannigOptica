@@ -46,21 +46,37 @@ RUN npm run build
 # Crear directorio de scripts
 RUN mkdir -p ./scripts
 
-# Copiar scripts críticos con verificación
-COPY scripts/init.sh ./scripts/init.sh
-RUN chmod +x ./scripts/init.sh
+# Copiar el directorio completo de scripts (el .dockerignore excluirá los no necesarios)
+COPY scripts/ ./scripts/
 
-COPY scripts/start-production.sh ./scripts/start-production.sh  
-RUN chmod +x ./scripts/start-production.sh
+# Limpiar scripts de desarrollo que no son necesarios en producción
+RUN rm -f ./scripts/generate-test-clients.ts \
+           ./scripts/ping.ts \
+           ./scripts/seed-demo-data.ts \
+           ./scripts/deployment-diagnostic.sh \
+           ./scripts/extract-database-url.sh \
+           ./scripts/fix-database-url.sh \
+           ./scripts/migrate-to-postgres.sh
 
-COPY scripts/validate-env.sh ./scripts/validate-env.sh
-RUN chmod +x ./scripts/validate-env.sh
+# Verificar que los scripts críticos estén presentes
+RUN if [ ! -f ./scripts/railway-init.sh ]; then \
+        echo "❌ ERROR: railway-init.sh no encontrado" && exit 1; \
+    fi && \
+    if [ ! -f ./scripts/init.sh ]; then \
+        echo "❌ ERROR: init.sh no encontrado" && exit 1; \
+    fi && \
+    if [ ! -f ./scripts/start-production.sh ]; then \
+        echo "❌ ERROR: start-production.sh no encontrado" && exit 1; \
+    fi && \
+    if [ ! -f ./scripts/validate-env.sh ]; then \
+        echo "❌ ERROR: validate-env.sh no encontrado" && exit 1; \
+    fi
 
-COPY scripts/railway-init.sh ./scripts/railway-init.sh
-RUN chmod +x ./scripts/railway-init.sh
+# Dar permisos de ejecución a todos los scripts .sh
+RUN find ./scripts -name "*.sh" -type f -exec chmod +x {} \;
 
 # Verificación final
-RUN ls -la ./scripts/ && echo "✅ Todos los scripts están presentes"
+RUN ls -la ./scripts/ && echo "✅ Todos los scripts están presentes y ejecutables"
 
 # Limpiar archivos innecesarios
 RUN rm -rf src/ tsconfig.json
