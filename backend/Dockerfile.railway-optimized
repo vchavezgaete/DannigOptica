@@ -26,17 +26,18 @@ RUN mkdir -p /tmp/.npm
 # Railway build context es la raíz del repo, por lo que necesitamos backend/
 COPY backend/package*.json ./
 
-# Instalar dependencias con configuración optimizada
-RUN npm ci --only=production --no-audit --no-fund \
+# Copiar schema de Prisma antes de instalar dependencias
+# (el postinstall script ejecuta prisma generate y necesita el schema)
+COPY backend/prisma ./prisma
+
+# Instalar todas las dependencias (necesitamos devDependencies para Prisma CLI y TypeScript)
+# El postinstall ejecutará prisma generate automáticamente
+RUN npm ci --no-audit --no-fund \
     && npm cache clean --force \
     && rm -rf /tmp/.npm
 
 # Copiar archivos de configuración
 COPY backend/tsconfig.json ./
-COPY backend/prisma ./prisma
-
-# Generar cliente de Prisma
-RUN npx prisma generate
 
 # Copiar código fuente
 COPY backend/src ./src
