@@ -13,16 +13,15 @@ try {
 } catch (error) {
   console.error('❌ Error resolviendo DATABASE_URL:', error instanceof Error ? error.message : String(error));
   process.exit(1);
+  // Esta línea nunca se ejecutará, pero TypeScript necesita una asignación aquí
+  databaseUrl = '';
 }
-
-// TypeScript assertion: databaseUrl está garantizado aquí porque process.exit(1) previene continuar
-const resolvedDatabaseUrl: string = databaseUrl;
 
 // Configurar Prisma con la URL resuelta
 export const prisma = new PrismaClient({
   datasources: {
     db: {
-      url: resolvedDatabaseUrl
+      url: databaseUrl
     }
   },
   log: ['warn', 'error'],

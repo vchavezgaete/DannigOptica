@@ -62,8 +62,23 @@ RUN if [ ! -f "./tsconfig.json" ]; then \
     fi && \
     echo "✅ tsconfig.json encontrado"
 
-# Compilar TypeScript
-RUN npm run build
+# Verificar que los tipos de Node están disponibles antes de compilar
+RUN if [ ! -d "./node_modules/@types/node" ]; then \
+        echo "❌ ERROR: @types/node no disponible para TypeScript" && exit 1; \
+    fi && \
+    if [ ! -f "./node_modules/@types/node/index.d.ts" ]; then \
+        echo "❌ ERROR: @types/node/index.d.ts no encontrado" && exit 1; \
+    fi && \
+    echo "✅ @types/node verificado y disponible" && \
+    echo "📦 Tipos disponibles:" && \
+    ls -la ./node_modules/@types/ | head -10
+
+# Compilar TypeScript con información de debug
+RUN echo "🔍 Verificando configuración de TypeScript..." && \
+    cat ./tsconfig.json && \
+    echo "" && \
+    echo "🔨 Compilando TypeScript..." && \
+    npm run build
 
 # Crear directorio de scripts
 RUN mkdir -p ./scripts
