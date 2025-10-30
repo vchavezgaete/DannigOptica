@@ -10,16 +10,15 @@ RUN apk add --no-cache openssl libc6-compat netcat-openbsd curl
 # Copiar package.json y package-lock.json
 COPY package*.json ./
 
-# Instalar dependencias
+# Copiar prisma schema antes de instalar dependencias
+COPY prisma ./prisma
+
+# Instalar dependencias (postinstall ejecutará prisma generate)
 RUN npm install
 
 # Copiar solo fuentes necesarias para build
 COPY tsconfig.json ./
-COPY prisma ./prisma
 COPY src ./src
-
-# Generar cliente de Prisma
-RUN npx prisma generate
 
 # Compilar TypeScript a dist
 RUN npm run build
