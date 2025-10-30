@@ -62,22 +62,21 @@ RUN if [ ! -f "./tsconfig.json" ]; then \
     fi && \
     echo "✅ tsconfig.json encontrado"
 
-# Verificar que los tipos de Node están disponibles antes de compilar
-RUN if [ ! -d "./node_modules/@types/node" ]; then \
-        echo "❌ ERROR: @types/node no disponible para TypeScript" && exit 1; \
+# Asegurar que los tipos de Node estén disponibles antes de compilar
+# Si no están, instalarlos automáticamente
+RUN echo "🔍 Verificando tipos de TypeScript..." && \
+    if [ ! -d "./node_modules/@types/node" ] || [ ! -f "./node_modules/@types/node/index.d.ts" ]; then \
+        echo "⚠️  @types/node no encontrado, instalando..." && \
+        npm install @types/node@^20.0.0 --save-dev && \
+        echo "✅ @types/node instalado"; \
+    else \
+        echo "✅ @types/node ya está disponible"; \
     fi && \
-    if [ ! -f "./node_modules/@types/node/index.d.ts" ]; then \
-        echo "❌ ERROR: @types/node/index.d.ts no encontrado" && exit 1; \
-    fi && \
-    echo "✅ @types/node verificado y disponible" && \
-    echo "📦 Tipos disponibles:" && \
-    ls -la ./node_modules/@types/ | head -10
+    echo "📦 Verificando tipos instalados:" && \
+    ls -la ./node_modules/@types/ 2>/dev/null | grep -E "(node|bcrypt|jsonwebtoken)" || echo "Algunos tipos pueden estar en dependencias transitivas"
 
-# Compilar TypeScript con información de debug
-RUN echo "🔍 Verificando configuración de TypeScript..." && \
-    cat ./tsconfig.json && \
-    echo "" && \
-    echo "🔨 Compilando TypeScript..." && \
+# Compilar TypeScript
+RUN echo "🔨 Compilando TypeScript..." && \
     npm run build
 
 # Crear directorio de scripts
