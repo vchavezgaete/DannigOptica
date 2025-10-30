@@ -23,7 +23,8 @@ RUN apk add --no-cache --update \
 RUN mkdir -p /tmp/.npm
 
 # Copiar package.json y package-lock.json primero para mejor caché
-COPY package*.json ./
+# Railway build context es la raíz del repo, por lo que necesitamos backend/
+COPY backend/package*.json ./
 
 # Instalar dependencias con configuración optimizada
 RUN npm ci --only=production --no-audit --no-fund \
@@ -31,14 +32,14 @@ RUN npm ci --only=production --no-audit --no-fund \
     && rm -rf /tmp/.npm
 
 # Copiar archivos de configuración
-COPY tsconfig.json ./
-COPY prisma ./prisma
+COPY backend/tsconfig.json ./
+COPY backend/prisma ./prisma
 
 # Generar cliente de Prisma
 RUN npx prisma generate
 
 # Copiar código fuente
-COPY src ./src
+COPY backend/src ./src
 
 # Compilar TypeScript
 RUN npm run build
@@ -47,7 +48,7 @@ RUN npm run build
 RUN mkdir -p ./scripts
 
 # Copiar el directorio completo de scripts (el .dockerignore excluirá los no necesarios)
-COPY scripts/ ./scripts/
+COPY backend/scripts/ ./scripts/
 
 # Limpiar scripts de desarrollo que no son necesarios en producción
 RUN rm -f ./scripts/generate-test-clients.ts \
