@@ -15,11 +15,14 @@ try {
   process.exit(1);
 }
 
+// TypeScript assertion: databaseUrl está garantizado aquí porque process.exit(1) previene continuar
+const resolvedDatabaseUrl: string = databaseUrl;
+
 // Configurar Prisma con la URL resuelta
 export const prisma = new PrismaClient({
   datasources: {
     db: {
-      url: databaseUrl
+      url: resolvedDatabaseUrl
     }
   },
   log: ['warn', 'error'],
