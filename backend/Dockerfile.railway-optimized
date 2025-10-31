@@ -49,33 +49,31 @@ RUN if [ ! -f "./tsconfig.json" ]; then \
     echo "tsconfig.json found"
 
 # Ensure all TypeScript types are installed
-RUN echo "Ensuring TypeScript types are installed..." && \
-    npm install --save-dev \
+# Force installation even if already in package.json to ensure they are in node_modules
+RUN echo "Installing TypeScript types..." && \
+    npm install --save-dev --force \
         @types/node@^20.19.24 \
         @types/bcrypt@^5.0.0 \
         @types/jsonwebtoken@^9.0.6 \
         @types/nodemailer@^7.0.3 \
-        @types/node-cron@^3.0.11 || \
-    (echo "Retrying type installation..." && sleep 3 && npm install --save-dev \
-        @types/node@^20.19.24 \
-        @types/bcrypt@^5.0.0 \
-        @types/jsonwebtoken@^9.0.6 \
-        @types/nodemailer@^7.0.3 \
-        @types/node-cron@^3.0.11) && \
-    echo "TypeScript types installation completed"
+        @types/node-cron@^3.0.11 && \
+    echo "TypeScript types installation step completed"
 
-# Verify types are available
-RUN echo "Verifying types availability..." && \
+# Verify types were actually installed
+RUN echo "Verifying installed types..." && \
+    ls -la ./node_modules/@types/ 2>/dev/null | head -10 && \
     if [ ! -f "./node_modules/@types/node/index.d.ts" ]; then \
-        echo "ERROR: @types/node not found" && exit 1; \
+        echo "ERROR: @types/node/index.d.ts not found after installation" && \
+        ls -la ./node_modules/@types/node/ 2>/dev/null || echo "Directory does not exist" && \
+        exit 1; \
     fi && \
     if [ ! -f "./node_modules/@types/bcrypt/index.d.ts" ]; then \
-        echo "ERROR: @types/bcrypt not found" && exit 1; \
+        echo "ERROR: @types/bcrypt/index.d.ts not found" && exit 1; \
     fi && \
     if [ ! -f "./node_modules/@types/jsonwebtoken/index.d.ts" ]; then \
-        echo "ERROR: @types/jsonwebtoken not found" && exit 1; \
+        echo "ERROR: @types/jsonwebtoken/index.d.ts not found" && exit 1; \
     fi && \
-    echo "All required types are available"
+    echo "All required types verified and available"
 
 # Compile TypeScript
 RUN echo "Compiling TypeScript..." && npm run build
