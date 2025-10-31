@@ -30,9 +30,11 @@ COPY backend/package*.json ./
 # (el postinstall script ejecuta prisma generate y necesita el schema)
 COPY backend/prisma ./prisma
 
-# Instalar todas las dependencias (necesitamos devDependencies para Prisma CLI y TypeScript)
+# Instalar todas las dependencias incluyendo devDependencies
+# Necesitamos devDependencies para Prisma CLI, TypeScript y tipos
 # El postinstall ejecutará prisma generate automáticamente
-RUN npm ci --no-audit --no-fund \
+# Usar --include=dev para asegurar que se instalen devDependencies
+RUN npm ci --include=dev --no-audit --no-fund \
     && npm cache clean --force \
     && rm -rf /tmp/.npm
 
