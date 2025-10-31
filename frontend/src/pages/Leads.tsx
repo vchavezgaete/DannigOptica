@@ -129,7 +129,9 @@ export default function Leads() {
   const [loading, setLoading] = useState(false);
 
   // Determine if user is captador
-  const isCaptador = auth?.hasRole('captador') && !auth?.hasRole('admin');
+  // Admin puede ver todo, así que verificamos roles sin excluir admin
+  const isCaptador = auth?.hasRole('captador');
+  const isAdmin = auth?.hasRole('admin');
 
   // Función para manejar el cambio del RUT
   function handleRutChange(value: string) {

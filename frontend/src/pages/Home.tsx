@@ -17,8 +17,10 @@ export default function Home() {
   const [err, setErr] = useState<string | null>(null);
 
   // Determine user roles
-  const isCaptador = auth?.hasRole('captador') && !auth?.hasRole('admin');
-  const isOftalmologo = auth?.hasRole('oftalmologo') && !auth?.hasRole('admin');
+  // Admin puede ver todo, así que verificamos roles sin excluir admin
+  const isCaptador = auth?.hasRole('captador');
+  const isOftalmologo = auth?.hasRole('oftalmologo');
+  const isAdmin = auth?.hasRole('admin');
 
   useEffect(() => {
     (async () => {
@@ -35,8 +37,9 @@ export default function Home() {
     })();
   }, []);
 
-  // Si es captador, mostrar mensaje de acceso restringido
-  if (isCaptador) {
+  // Si es captador (y NO es admin), mostrar mensaje de acceso restringido
+  // Admin puede ver todo, incluyendo el módulo de inicio
+  if (isCaptador && !isAdmin) {
     return (
       <div className="grid">
         <div className="section">
@@ -83,8 +86,9 @@ export default function Home() {
     );
   }
 
-  // Si es oftalmólogo, mostrar mensaje específico
-  if (isOftalmologo) {
+  // Si es oftalmólogo (y NO es admin), mostrar mensaje específico
+  // Admin puede ver todo, incluyendo el módulo de inicio
+  if (isOftalmologo && !isAdmin) {
     return (
       <div className="grid">
         <div className="section">

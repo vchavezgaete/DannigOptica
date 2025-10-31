@@ -114,8 +114,10 @@ export default function Clientes() {
   });
 
   // Determine if user is captador
-  const isCaptador = auth?.hasRole('captador') && !auth?.hasRole('admin') && !auth?.hasRole('oftalmologo');
-  const isOftalmologo = auth?.hasRole('oftalmologo') && !auth?.hasRole('admin');
+  // Admin puede ver todo, así que verificamos roles sin excluir admin
+  const isCaptador = auth?.hasRole('captador');
+  const isOftalmologo = auth?.hasRole('oftalmologo');
+  const isAdmin = auth?.hasRole('admin');
 
   async function buscar() {
     setErr(null); setCliente(null); setLoading(true);
@@ -217,14 +219,19 @@ export default function Clientes() {
             : "Busca información detallada de tus clientes registrados"
           }
         </p>
-        {isCaptador && (
+        {isCaptador && !isAdmin && !isOftalmologo && (
           <div className="alert alert--info" style={{ marginTop: "1rem" }}>
             <strong>📌 Nota:</strong> Como captador, solo puedes ver información de los clientes que tú has captado.
           </div>
         )}
-        {isOftalmologo && (
+        {isOftalmologo && !isAdmin && (
           <div className="alert alert--info" style={{ marginTop: "1rem" }}>
             <strong>🩺 Acceso Clínico:</strong> Como oftalmólogo, tienes acceso completo a la información de todos los clientes para consultas médicas.
+          </div>
+        )}
+        {isAdmin && (
+          <div className="alert alert--success" style={{ marginTop: "1rem" }}>
+            <strong>👑 Acceso Administrador:</strong> Tienes acceso completo a todas las funcionalidades del sistema.
           </div>
         )}
         </div>
@@ -361,7 +368,7 @@ export default function Clientes() {
 
           {/* Acciones */}
           <div className="flex" style={{ marginTop: "1.5rem", gap: "1rem" }}>
-            {auth?.hasRole('admin') && (
+            {(isAdmin || isOftalmologo) && (
               <button 
                 className="btn btn--secondary btn--small"
                 onClick={() => {
@@ -372,7 +379,7 @@ export default function Clientes() {
                 📅 Agendar Hora
               </button>
             )}
-            {auth?.hasRole('admin') && (
+            {isAdmin && (
               <button 
                 className="btn btn--secondary btn--small"
                 onClick={abrirEditarModal}
@@ -380,7 +387,7 @@ export default function Clientes() {
                 📝 Editar Información
               </button>
             )}
-            {auth?.hasRole('oftalmologo') && (
+            {(isAdmin || isOftalmologo) && (
               <button 
                 className="btn btn--primary btn--small"
                 onClick={() => {

@@ -14,7 +14,10 @@ export default function RoleProtectedRoute({ children, requiredRole }: Props) {
     return <Navigate to="/login" replace />;
   }
 
-  if (!auth.hasRole(requiredRole)) {
+  // El administrador tiene acceso a todas las rutas
+  const hasAccess = auth.hasRole('admin') || auth.hasRole(requiredRole);
+
+  if (!hasAccess) {
     return (
       <div style={{ 
         padding: "2rem", 
@@ -23,7 +26,7 @@ export default function RoleProtectedRoute({ children, requiredRole }: Props) {
       }}>
         <h2>🔒 Acceso Restringido</h2>
         <p>No tienes permisos para acceder a esta sección.</p>
-        <p>Se requiere rol: <strong>{requiredRole}</strong></p>
+        <p>Se requiere rol: <strong>{requiredRole}</strong> o administrador</p>
       </div>
     );
   }
