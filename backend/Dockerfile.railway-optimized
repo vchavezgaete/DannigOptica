@@ -1,17 +1,14 @@
-# Railway-optimized Dockerfile for Dannig Óptica Backend
-# Optimized for network reliability and Railway deployment
+# Railway-optimized Dockerfile for Dannig Optica Backend
 FROM node:18-alpine
 
-# Establecer directorio de trabajo
 WORKDIR /app
 
-# Configurar variables de entorno para mejor rendimiento de red
 ENV NODE_ENV=production
 ENV PORT=3001
 ENV npm_config_cache=/tmp/.npm
 ENV npm_config_registry=https://registry.npmjs.org/
 
-# Dependencias del sistema con reintentos
+# System dependencies
 RUN apk add --no-cache --update \
     openssl \
     libc6-compat \
@@ -19,104 +16,89 @@ RUN apk add --no-cache --update \
     curl \
     && rm -rf /var/cache/apk/*
 
-# Crear directorio de caché de npm
 RUN mkdir -p /tmp/.npm
 
-# Copiar package.json y package-lock.json primero para mejor caché
-# Railway build context es la raíz del repo, por lo que necesitamos backend/
+# Copy package files and Prisma schema
 COPY backend/package*.json ./
-
-# Copiar schema de Prisma antes de instalar dependencias
-# (el postinstall script ejecuta prisma generate y necesita el schema)
 COPY backend/prisma ./prisma
 
-# Instalar todas las dependencias incluyendo devDependencies
-# Necesitamos devDependencies para Prisma CLI, TypeScript y tipos
-# El postinstall ejecutará prisma generate automáticamente
-# Usar NODE_ENV=development para asegurar instalación de devDependencies
-# Agregar reintentos para problemas de red
+# Install dependencies with retries for network issues
 RUN NODE_ENV=development npm ci --no-audit --no-fund || \
-    (echo "Reintentando npm ci..." && sleep 2 && NODE_ENV=development npm ci --no-audit --no-fund) || \
-    (echo "Segundo reintento..." && sleep 5 && NODE_ENV=development npm ci --no-audit --no-fund) && \
+    (echo "Retrying npm ci..." && sleep 2 && NODE_ENV=development npm ci --no-audit --no-fund) || \
+    (echo "Second retry..." && sleep 5 && NODE_ENV=development npm ci --no-audit --no-fund) && \
     npm cache clean --force
 
-# Verificar que dependencias críticas estén instaladas después de npm ci
-RUN echo "Verificando dependencias instaladas..." && \
+# Verify critical dependencies
+RUN echo "Verifying dependencies..." && \
     if [ ! -d "./node_modules/typescript" ]; then \
-        echo "ERROR: TypeScript no está instalado" && exit 1; \
+        echo "ERROR: TypeScript not installed" && exit 1; \
     fi && \
     if [ ! -d "./node_modules/@prisma/client" ]; then \
-        echo "ERROR: @prisma/client no está instalado" && exit 1; \
+        echo "ERROR: @prisma/client not installed" && exit 1; \
     fi && \
-    echo "Dependencias básicas verificadas"
+    echo "Basic dependencies verified"
 
-# Copiar archivos de configuración
+# Copy configuration and source code
 COPY backend/tsconfig.json ./
-
-# Copiar código fuente
 COPY backend/src ./src
 
-# Verificar que tsconfig.json existe antes de compilar
+# Verify tsconfig exists
 RUN if [ ! -f "./tsconfig.json" ]; then \
-        echo "❌ ERROR: tsconfig.json no encontrado" && exit 1; \
+        echo "ERROR: tsconfig.json not found" && exit 1; \
     fi && \
-    echo "✅ tsconfig.json encontrado"
+    echo "tsconfig.json found"
 
-# Verificar que todos los tipos necesarios estén instalados después de npm ci
-# Si falta alguno, reinstalarlo usando npm install con reintentos
-RUN echo "Verificando tipos de TypeScript instalados..." && \
+# Verify and install TypeScript types if missing
+RUN echo "Verifying TypeScript types..." && \
     if [ ! -d "./node_modules/@types/node" ] || [ ! -f "./node_modules/@types/node/index.d.ts" ]; then \
-        echo "Instalando @types/node..." && \
+        echo "Installing @types/node..." && \
         npm install @types/node@^20.19.24 --save-dev || \
-        (echo "Reintentando @types/node..." && sleep 3 && npm install @types/node@^20.19.24 --save-dev) || \
-        (echo "Segundo reintento @types/node..." && sleep 5 && npm install @types/node@^20.19.24 --save-dev); \
+        (echo "Retrying @types/node..." && sleep 3 && npm install @types/node@^20.19.24 --save-dev) || \
+        (echo "Second retry @types/node..." && sleep 5 && npm install @types/node@^20.19.24 --save-dev); \
     fi && \
     if [ ! -d "./node_modules/@types/bcrypt" ] || [ ! -f "./node_modules/@types/bcrypt/index.d.ts" ]; then \
-        echo "Instalando @types/bcrypt..." && \
+        echo "Installing @types/bcrypt..." && \
         npm install @types/bcrypt@^5.0.0 --save-dev || \
-        (echo "Reintentando @types/bcrypt..." && sleep 3 && npm install @types/bcrypt@^5.0.0 --save-dev); \
+        (echo "Retrying @types/bcrypt..." && sleep 3 && npm install @types/bcrypt@^5.0.0 --save-dev); \
     fi && \
     if [ ! -d "./node_modules/@types/jsonwebtoken" ] || [ ! -f "./node_modules/@types/jsonwebtoken/index.d.ts" ]; then \
-        echo "Instalando @types/jsonwebtoken..." && \
+        echo "Installing @types/jsonwebtoken..." && \
         npm install @types/jsonwebtoken@^9.0.6 --save-dev || \
-        (echo "Reintentando @types/jsonwebtoken..." && sleep 3 && npm install @types/jsonwebtoken@^9.0.6 --save-dev); \
+        (echo "Retrying @types/jsonwebtoken..." && sleep 3 && npm install @types/jsonwebtoken@^9.0.6 --save-dev); \
     fi && \
     if [ ! -d "./node_modules/@types/nodemailer" ] || [ ! -f "./node_modules/@types/nodemailer/index.d.ts" ]; then \
-        echo "Instalando @types/nodemailer..." && \
+        echo "Installing @types/nodemailer..." && \
         npm install @types/nodemailer@^7.0.3 --save-dev || \
-        (echo "Reintentando @types/nodemailer..." && sleep 3 && npm install @types/nodemailer@^7.0.3 --save-dev); \
+        (echo "Retrying @types/nodemailer..." && sleep 3 && npm install @types/nodemailer@^7.0.3 --save-dev); \
     fi && \
     if [ ! -d "./node_modules/@types/node-cron" ] || [ ! -f "./node_modules/@types/node-cron/index.d.ts" ]; then \
-        echo "Instalando @types/node-cron..." && \
+        echo "Installing @types/node-cron..." && \
         npm install @types/node-cron@^3.0.11 --save-dev || \
-        (echo "Reintentando @types/node-cron..." && sleep 3 && npm install @types/node-cron@^3.0.11 --save-dev); \
+        (echo "Retrying @types/node-cron..." && sleep 3 && npm install @types/node-cron@^3.0.11 --save-dev); \
     fi && \
-    echo "Tipos de TypeScript verificados e instalados"
+    echo "TypeScript types verified"
 
-# Verificación final de tipos críticos antes de compilar
-RUN echo "Verificación final de tipos..." && \
+# Final verification before compilation
+RUN echo "Final type verification..." && \
     if [ ! -f "./node_modules/@types/node/index.d.ts" ]; then \
-        echo "ERROR CRITICO: @types/node no está disponible después de instalación" && exit 1; \
+        echo "CRITICAL ERROR: @types/node not available" && exit 1; \
     fi && \
     if [ ! -f "./node_modules/@types/bcrypt/index.d.ts" ]; then \
-        echo "ERROR CRITICO: @types/bcrypt no está disponible después de instalación" && exit 1; \
+        echo "CRITICAL ERROR: @types/bcrypt not available" && exit 1; \
     fi && \
     if [ ! -f "./node_modules/@types/jsonwebtoken/index.d.ts" ]; then \
-        echo "ERROR CRITICO: @types/jsonwebtoken no está disponible después de instalación" && exit 1; \
+        echo "CRITICAL ERROR: @types/jsonwebtoken not available" && exit 1; \
     fi && \
-    echo "Todos los tipos requeridos están disponibles y listos para compilar"
+    echo "All required types available"
 
-# Compilar TypeScript
-RUN echo "Compilando TypeScript..." && \
-    npm run build
+# Compile TypeScript
+RUN echo "Compiling TypeScript..." && npm run build
 
-# Crear directorio de scripts
+# Copy and prepare scripts
 RUN mkdir -p ./scripts
-
-# Copiar el directorio completo de scripts (el .dockerignore excluirá los no necesarios)
 COPY backend/scripts/ ./scripts/
 
-# Limpiar scripts de desarrollo que no son necesarios en producción
+# Remove development scripts
 RUN rm -f ./scripts/generate-test-clients.ts \
            ./scripts/ping.ts \
            ./scripts/seed-demo-data.ts \
@@ -125,31 +107,26 @@ RUN rm -f ./scripts/generate-test-clients.ts \
            ./scripts/fix-database-url.sh \
            ./scripts/migrate-to-postgres.sh
 
-# Verificar que los scripts críticos estén presentes
+# Verify critical scripts exist
 RUN if [ ! -f ./scripts/railway-init.sh ]; then \
-        echo "❌ ERROR: railway-init.sh no encontrado" && exit 1; \
+        echo "ERROR: railway-init.sh not found" && exit 1; \
     fi && \
     if [ ! -f ./scripts/init.sh ]; then \
-        echo "❌ ERROR: init.sh no encontrado" && exit 1; \
+        echo "ERROR: init.sh not found" && exit 1; \
     fi && \
     if [ ! -f ./scripts/start-production.sh ]; then \
-        echo "❌ ERROR: start-production.sh no encontrado" && exit 1; \
+        echo "ERROR: start-production.sh not found" && exit 1; \
     fi && \
     if [ ! -f ./scripts/validate-env.sh ]; then \
-        echo "❌ ERROR: validate-env.sh no encontrado" && exit 1; \
+        echo "ERROR: validate-env.sh not found" && exit 1; \
     fi
 
-# Dar permisos de ejecución a todos los scripts .sh
+# Make scripts executable
 RUN find ./scripts -name "*.sh" -type f -exec chmod +x {} \;
 
-# Verificación final
-RUN ls -la ./scripts/ && echo "✅ Todos los scripts están presentes y ejecutables"
-
-# Limpiar archivos innecesarios
+# Clean up source files
 RUN rm -rf src/ tsconfig.json
 
-# Exponer puerto
 EXPOSE 3001
 
-# Comando de inicio con inicialización automática
 CMD ["./scripts/railway-init.sh"]
