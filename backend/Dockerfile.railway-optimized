@@ -33,8 +33,8 @@ COPY backend/prisma ./prisma
 # Instalar todas las dependencias incluyendo devDependencies
 # Necesitamos devDependencies para Prisma CLI, TypeScript y tipos
 # El postinstall ejecutará prisma generate automáticamente
-# Usar --include=dev para asegurar que se instalen devDependencies
-RUN npm ci --include=dev --no-audit --no-fund \
+# Temporalmente establecer NODE_ENV para forzar instalación de devDependencies
+RUN NODE_ENV=development npm ci --no-audit --no-fund \
     && npm cache clean --force \
     && rm -rf /tmp/.npm
 
@@ -64,26 +64,24 @@ RUN if [ ! -f "./tsconfig.json" ]; then \
     fi && \
     echo "✅ tsconfig.json encontrado"
 
-# Instalar todos los tipos necesarios para TypeScript antes de compilar
-RUN echo "Verificando e instalando tipos de TypeScript..." && \
-    npm install --save-dev \
-        @types/node@^20.19.24 \
-        @types/bcrypt@^5.0.0 \
-        @types/jsonwebtoken@^9.0.6 \
-        @types/nodemailer@^7.0.3 \
-        @types/node-cron@^3.0.11 \
-    && echo "Tipos de TypeScript instalados correctamente"
+# Verificar e instalar tipos de TypeScript si no están presentes
+RUN echo "Verificando tipos de TypeScript..." && \
+    npm list @types/node 2>/dev/null || npm install --no-save @types/node@^20.19.24 && \
+    npm list @types/bcrypt 2>/dev/null || npm install --no-save @types/bcrypt@^5.0.0 && \
+    npm list @types/jsonwebtoken 2>/dev/null || npm install --no-save @types/jsonwebtoken@^9.0.6 && \
+    npm list @types/nodemailer 2>/dev/null || npm install --no-save @types/nodemailer@^7.0.3 && \
+    npm list @types/node-cron 2>/dev/null || npm install --no-save @types/node-cron@^3.0.11 && \
+    echo "Tipos de TypeScript verificados"
 
-# Verificar que todos los tipos críticos estén presentes
-RUN echo "Verificando tipos instalados..." && \
-    ls -la ./node_modules/@types/ 2>/dev/null | head -20 && \
-    if [ ! -f "./node_modules/@types/node/index.d.ts" ]; then \
+# Verificar que los tipos críticos estén disponibles
+RUN echo "Verificando que los tipos estan disponibles..." && \
+    if [ ! -d "./node_modules/@types/node" ] || [ ! -f "./node_modules/@types/node/package.json" ]; then \
         echo "ERROR: @types/node no encontrado" && exit 1; \
     fi && \
-    if [ ! -f "./node_modules/@types/bcrypt/index.d.ts" ]; then \
+    if [ ! -d "./node_modules/@types/bcrypt" ] || [ ! -f "./node_modules/@types/bcrypt/package.json" ]; then \
         echo "ERROR: @types/bcrypt no encontrado" && exit 1; \
     fi && \
-    if [ ! -f "./node_modules/@types/jsonwebtoken/index.d.ts" ]; then \
+    if [ ! -d "./node_modules/@types/jsonwebtoken" ] || [ ! -f "./node_modules/@types/jsonwebtoken/package.json" ]; then \
         echo "ERROR: @types/jsonwebtoken no encontrado" && exit 1; \
     fi && \
     echo "Todos los tipos requeridos estan disponibles"
