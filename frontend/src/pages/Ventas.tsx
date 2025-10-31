@@ -184,10 +184,24 @@ export default function Ventas() {
         api.get<Venta[]>("/ventas")
       ]);
       setClientes(clientesRes.data);
-      setProductos(productosRes.data);
+      setProductos(productosRes.data || []);
       setVentas(ventasRes.data);
+      
+      // Mostrar mensaje de éxito si hay productos
+      if (productosRes.data && productosRes.data.length > 0) {
+        setMsg(`✅ ${productosRes.data.length} productos cargados correctamente. Puedes agregar productos a las ventas.`);
+      } else {
+        setErr("No hay productos disponibles. Ejecuta el script 'npm run generate:products' en el backend para generar productos de ejemplo.");
+      }
     } catch (error: any) {
-      setErr(error.response?.data?.error || "Error al cargar datos");
+      console.error("Error loading data:", error);
+      const errorMessage = error.response?.data?.error || error.message || "Error al cargar datos";
+      setErr(errorMessage);
+      
+      // Si el error es específico de productos, dar instrucciones
+      if (errorMessage.includes("productos") || error.response?.status === 404) {
+        setErr(`${errorMessage}. Asegúrate de ejecutar 'npm run generate:products' en el backend.`);
+      }
     } finally {
       setLoading(false);
     }
@@ -485,30 +499,61 @@ export default function Ventas() {
                 {showAgregarProducto && (
                   <div className="card" style={{ marginBottom: "1rem", padding: "1.5rem", maxWidth: "100%" }}>
                     <h4 style={{ marginTop: 0 }}>Agregar Producto</h4>
-                    <div className="form__row" style={{ flexWrap: "wrap", gap: "1rem" }}>
-                      <div className="form__group" style={{ flex: "1 1 300px", minWidth: "200px" }}>
-                        <label className="form__label">Producto *</label>
-                        <select
-                          className="form__input"
-                          value={productoSeleccionado || ""}
-                          onChange={(e) => {
-                            const prodId = Number(e.target.value);
-                            setProductoSeleccionado(prodId);
-                            const prod = productos.find(p => p.idProducto === prodId);
-                            if (prod) {
-                              setPrecioUnitario(Number(prod.precio));
-                            }
-                          }}
-                          style={{ width: "100%" }}
+                    {productos.length === 0 ? (
+                      <div className="alert alert--warning">
+                        <strong>⚠️ No hay productos disponibles</strong>
+                        <p style={{ margin: "0.5rem 0 0", fontSize: "0.9rem" }}>
+                          Para poder agregar productos a una venta, primero necesitas tener productos registrados en el sistema.
+                        </p>
+                        <p style={{ margin: "0.5rem 0 0", fontSize: "0.85rem", color: "var(--texto-sec)" }}>
+                          <strong>Para generar productos de ejemplo:</strong>
+                          <br />
+                          1. Ve al directorio del backend: <code>cd backend</code>
+                          <br />
+                          2. Ejecuta: <code>npm run generate:products</code>
+                          <br />
+                          <br />
+                          Este comando creará marcos, cristales y accesorios de ejemplo que podrás usar en las ventas.
+                        </p>
+                        <button
+                          className="btn btn--secondary"
+                          onClick={loadData}
+                          style={{ marginTop: "1rem", width: "auto" }}
                         >
-                          <option value="">Selecciona un producto</option>
-                          {productos.map(prod => (
-                            <option key={prod.idProducto} value={prod.idProducto}>
-                              {prod.nombre} - ${Number(prod.precio).toLocaleString()}
-                            </option>
-                          ))}
-                        </select>
+                          🔄 Recargar Productos
+                        </button>
                       </div>
+                    ) : (
+                      <div className="form__row" style={{ flexWrap: "wrap", gap: "1rem" }}>
+                        <div className="form__group" style={{ flex: "1 1 300px", minWidth: "200px" }}>
+                          <label className="form__label">
+                            Producto * 
+                            <span style={{ fontSize: "0.85rem", fontWeight: "normal", color: "var(--texto-sec)", marginLeft: "0.5rem" }}>
+                              ({productos.length} disponibles)
+                            </span>
+                          </label>
+                          <select
+                            className="form__input"
+                            value={productoSeleccionado || ""}
+                            onChange={(e) => {
+                              const prodId = Number(e.target.value);
+                              setProductoSeleccionado(prodId);
+                              const prod = productos.find(p => p.idProducto === prodId);
+                              if (prod) {
+                                setPrecioUnitario(Number(prod.precio));
+                              }
+                            }}
+                            style={{ width: "100%" }}
+                          >
+                            <option value="">Selecciona un producto</option>
+                            {productos.map(prod => (
+                              <option key={prod.idProducto} value={prod.idProducto}>
+                                {prod.nombre} - ${Number(prod.precio).toLocaleString()}
+                                {prod.tipo ? ` (${prod.tipo})` : ''}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
                       <div className="form__group" style={{ flex: "0 1 120px", minWidth: "100px" }}>
                         <label className="form__label">Cantidad *</label>
                         <input
