@@ -254,21 +254,29 @@ export default function Appointments() {
                 <input
                   type="text"
                   className="form__input"
-                  placeholder="Ej: 12345678-9 o 12.345.678-9"
+                  placeholder="Ej: 12345678-9 o 12345678"
                   value={rutBusqueda}
                   onChange={(e) => {
-                    const valor = e.target.value;
-                    setRutBusqueda(valor);
+                    // Formatear automáticamente mientras se escribe
+                    const rutFormateado = formatearRUT(e.target.value);
+                    setRutBusqueda(rutFormateado);
                     // Buscar automáticamente cuando el RUT esté completo
-                    if (valor.length >= 8) {
-                      buscarClientePorRUT(valor);
+                    if (rutFormateado.length >= 10) {
+                      buscarClientePorRUT(rutFormateado);
                     } else {
                       setClienteEncontrado(null);
                       setLeadId("");
                       setErrorBusqueda(null);
                     }
                   }}
-                  style={{ flex: 1 }}
+                  onKeyPress={(e) => e.key === "Enter" && buscarClientePorRUT(rutBusqueda)}
+                  style={{ 
+                    flex: 1,
+                    fontFamily: 'monospace',
+                    fontSize: '1rem',
+                    letterSpacing: '0.05em'
+                  }}
+                  maxLength={12}
                 />
                 <button
                   type="button"
@@ -286,6 +294,13 @@ export default function Appointments() {
                     "🔍 Buscar"
                   )}
                 </button>
+              </div>
+              <div style={{ 
+                color: 'var(--texto-sec)', 
+                fontSize: '0.8rem', 
+                marginTop: '0.25rem' 
+              }}>
+                💡 El RUT se formatea automáticamente con puntos y guion
               </div>
               
               {/* Mostrar resultado de búsqueda */}
