@@ -363,25 +363,67 @@ function ProductosMasVendidosTable({ datos }: { datos: ProductoData[] }) {
         {/* Pie Chart - Cantidad */}
         <div className="card">
           <h3 style={{ margin: "0 0 1rem", color: "var(--verde)" }}>📊 Distribución por Cantidad</h3>
-          <ResponsiveContainer width="100%" height={300}>
+          <ResponsiveContainer width="100%" height={350}>
             <PieChart>
               <Pie
                 data={chartData}
                 cx="50%"
-                cy="50%"
-                labelLine={false}
-                label={(entry: Record<string, unknown>) => `${entry.name}: ${((entry.percent as number) * 100).toFixed(0)}%`}
-                outerRadius={80}
+                cy="45%"
+                labelLine={true}
+                label={(entry: Record<string, unknown>) => `${((entry.percent as number) * 100).toFixed(1)}%`}
+                outerRadius={100}
                 fill="#8884d8"
                 dataKey="value"
+                nameKey="name"
               >
                 {chartData.map((entry, index) => (
                   <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                 ))}
               </Pie>
-              <Tooltip />
+              <Tooltip 
+                formatter={(value: number, name: string) => [
+                  `${value} unidades`,
+                  name
+                ]}
+              />
             </PieChart>
           </ResponsiveContainer>
+          {/* Leyenda personalizada con nombres completos */}
+          <div style={{ 
+            marginTop: "1rem", 
+            padding: "0.75rem", 
+            background: "var(--gris)", 
+            borderRadius: "0.5rem",
+            fontSize: "0.85rem"
+          }}>
+            <div style={{ 
+              display: "grid", 
+              gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", 
+              gap: "0.5rem" 
+            }}>
+              {chartData.map((entry, index) => (
+                <div key={index} style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                  <div style={{ 
+                    width: "12px", 
+                    height: "12px", 
+                    background: COLORS[index % COLORS.length], 
+                    borderRadius: "2px"
+                  }} />
+                  <span style={{ 
+                    overflow: "hidden", 
+                    textOverflow: "ellipsis", 
+                    whiteSpace: "nowrap",
+                    flex: 1
+                  }}>
+                    {entry.name}
+                  </span>
+                  <strong style={{ color: "var(--verde)", minWidth: "40px" }}>
+                    {((entry.value / chartData.reduce((sum, e) => sum + e.value, 0)) * 100).toFixed(1)}%
+                  </strong>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
 
         {/* Bar Chart - Ingresos */}
