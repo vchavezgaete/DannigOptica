@@ -86,25 +86,19 @@ RUN echo "Compiling TypeScript..." && npm run build
 
 # Copy and prepare scripts
 RUN mkdir -p ./scripts
-COPY backend/scripts/ ./scripts/
 
-# Remove development scripts if they exist
-RUN rm -f ./scripts/generate-test-clients.ts \
-           ./scripts/ping.ts \
-           ./scripts/seed-demo-data.ts \
-           ./scripts/deployment-diagnostic.sh \
-           ./scripts/extract-database-url.sh \
-           ./scripts/fix-database-url.sh \
-           ./scripts/migrate-to-postgres.sh 2>/dev/null || true
+# Copy railway-init.sh explicitly (critical script)
+COPY backend/scripts/railway-init.sh ./scripts/railway-init.sh
 
-# Verify railway-init.sh exists (critical script)
+# Verify railway-init.sh exists and is executable
 RUN if [ ! -f ./scripts/railway-init.sh ]; then \
-        echo "ERROR: railway-init.sh not found" && ls -la ./scripts/ && exit 1; \
+        echo "ERROR: railway-init.sh not found" && \
+        ls -la ./scripts/ || true && \
+        ls -la backend/scripts/ || true && \
+        exit 1; \
     fi && \
-    echo "railway-init.sh found"
-
-# Make all shell scripts executable
-RUN find ./scripts -name "*.sh" -type f -exec chmod +x {} \; 2>/dev/null || true
+    chmod +x ./scripts/railway-init.sh && \
+    echo "railway-init.sh found and made executable"
 
 # Clean up source files
 RUN rm -rf src/ tsconfig.json
