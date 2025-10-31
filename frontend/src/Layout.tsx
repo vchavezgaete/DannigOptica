@@ -33,12 +33,13 @@ export default function Layout() {
             <div className="brand__name">DANNIG ÓPTICA</div>
           </div>
           
-          <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "1rem", flexWrap: "wrap" }}>
             <a 
               className="cta" 
               href="https://wa.me/56932609541" 
               target="_blank" 
               rel="noopener"
+              style={{ whiteSpace: "nowrap" }}
             >
               Agenda por WhatsApp
             </a>
@@ -51,7 +52,17 @@ export default function Layout() {
                 background: "transparent",
                 color: "var(--verde)",
                 cursor: "pointer",
-                fontWeight: "600"
+                fontWeight: "600",
+                whiteSpace: "nowrap",
+                transition: "all 0.2s ease"
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = "var(--verde)";
+                e.currentTarget.style.color = "#fff";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = "transparent";
+                e.currentTarget.style.color = "var(--verde)";
               }}
             >
               Cerrar Sesión
@@ -91,6 +102,18 @@ export default function Layout() {
             {auth.hasRole('admin') && (
               <NavLink to="/reportes" className="nav__link">
                 📊 Reportes
+              </NavLink>
+            )}
+            {/* Solo admin ve ventas */}
+            {auth.hasRole('admin') && (
+              <NavLink to="/ventas" className="nav__link">
+                💰 Ventas
+              </NavLink>
+            )}
+            {/* Solo admin ve alertas */}
+            {auth.hasRole('admin') && (
+              <NavLink to="/alertas" className="nav__link">
+                🔔 Alertas
               </NavLink>
             )}
         </div>
