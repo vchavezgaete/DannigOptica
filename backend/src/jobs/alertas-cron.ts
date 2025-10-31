@@ -31,52 +31,49 @@ import {
  * Esta función debe ser llamada una vez al iniciar el servidor
  */
 export function iniciarCronJobs() {
-  console.log("Iniciando sistema de alertas automatizadas...");
+  console.log("Starting automated alerts system...");
 
-  // Tarea 1: Procesar alertas pendientes cada 15 minutos
-  // Formato cron: "*/15 * * * *" = cada 15 minutos
+  // Task 1: Process pending alerts every 15 minutes
   cron.schedule("*/15 * * * *", async () => {
-    console.log("[Cron] Procesando alertas pendientes...");
+    console.log("[Cron] Processing pending alerts...");
     try {
       const enviadas = await procesarAlertasPendientes();
       if (enviadas > 0) {
-        console.log(`[Cron] ${enviadas} alertas enviadas`);
+        console.log(`[Cron] ${enviadas} alerts sent`);
       }
     } catch (error: any) {
-      console.error("[Cron] Error procesando alertas:", error.message);
+      console.error("[Cron] Error processing alerts:", error.message);
     }
   });
 
-  // Tarea 2: Generar alertas de citas cada hora
-  // Formato cron: "0 * * * *" = en el minuto 0 de cada hora
+  // Task 2: Generate appointment alerts every hour
   cron.schedule("0 * * * *", async () => {
-    console.log("[Cron] Generando alertas de recordatorio de citas...");
+    console.log("[Cron] Generating appointment reminder alerts...");
     try {
       const creadas = await generarAlertasCitas();
       if (creadas > 0) {
-        console.log(`[Cron] ${creadas} alertas de citas generadas`);
+        console.log(`[Cron] ${creadas} appointment alerts generated`);
       }
     } catch (error: any) {
-      console.error("[Cron] Error generando alertas de citas:", error.message);
+      console.error("[Cron] Error generating appointment alerts:", error.message);
     }
   });
 
-  // Tarea 3: Generar alertas de garantías cada día a las 8:00 AM
-  // Formato cron: "0 8 * * *" = a las 8:00 AM todos los días
+  // Task 3: Generate warranty alerts daily at 8:00 AM
   cron.schedule("0 8 * * *", async () => {
-    console.log("[Cron] Generando alertas de vencimiento de garantías...");
+    console.log("[Cron] Generating warranty expiration alerts...");
     try {
       const creadas = await generarAlertasGarantias();
       if (creadas > 0) {
-        console.log(`[Cron] ${creadas} alertas de garantías generadas`);
+        console.log(`[Cron] ${creadas} warranty alerts generated`);
       }
     } catch (error: any) {
-      console.error("[Cron] Error generando alertas de garantías:", error.message);
+      console.error("[Cron] Error generating warranty alerts:", error.message);
     }
   });
 
-  console.log("Sistema de alertas automatizadas iniciado correctamente");
-  console.log("   - Procesamiento de alertas: cada 15 minutos");
-  console.log("   - Generación de alertas de citas: cada hora");
-  console.log("   - Generación de alertas de garantías: diario a las 8:00 AM");
+  console.log("Automated alerts system started successfully");
+  console.log("   - Alert processing: every 15 minutes");
+  console.log("   - Appointment alerts: every hour");
+  console.log("   - Warranty alerts: daily at 8:00 AM");
 }
