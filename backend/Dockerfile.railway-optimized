@@ -48,48 +48,34 @@ RUN if [ ! -f "./tsconfig.json" ]; then \
     fi && \
     echo "tsconfig.json found"
 
-# Verify and install TypeScript types if missing
-RUN echo "Verifying TypeScript types..." && \
-    if [ ! -d "./node_modules/@types/node" ] || [ ! -f "./node_modules/@types/node/index.d.ts" ]; then \
-        echo "Installing @types/node..." && \
-        npm install @types/node@^20.19.24 --save-dev || \
-        (echo "Retrying @types/node..." && sleep 3 && npm install @types/node@^20.19.24 --save-dev) || \
-        (echo "Second retry @types/node..." && sleep 5 && npm install @types/node@^20.19.24 --save-dev); \
-    fi && \
-    if [ ! -d "./node_modules/@types/bcrypt" ] || [ ! -f "./node_modules/@types/bcrypt/index.d.ts" ]; then \
-        echo "Installing @types/bcrypt..." && \
-        npm install @types/bcrypt@^5.0.0 --save-dev || \
-        (echo "Retrying @types/bcrypt..." && sleep 3 && npm install @types/bcrypt@^5.0.0 --save-dev); \
-    fi && \
-    if [ ! -d "./node_modules/@types/jsonwebtoken" ] || [ ! -f "./node_modules/@types/jsonwebtoken/index.d.ts" ]; then \
-        echo "Installing @types/jsonwebtoken..." && \
-        npm install @types/jsonwebtoken@^9.0.6 --save-dev || \
-        (echo "Retrying @types/jsonwebtoken..." && sleep 3 && npm install @types/jsonwebtoken@^9.0.6 --save-dev); \
-    fi && \
-    if [ ! -d "./node_modules/@types/nodemailer" ] || [ ! -f "./node_modules/@types/nodemailer/index.d.ts" ]; then \
-        echo "Installing @types/nodemailer..." && \
-        npm install @types/nodemailer@^7.0.3 --save-dev || \
-        (echo "Retrying @types/nodemailer..." && sleep 3 && npm install @types/nodemailer@^7.0.3 --save-dev); \
-    fi && \
-    if [ ! -d "./node_modules/@types/node-cron" ] || [ ! -f "./node_modules/@types/node-cron/index.d.ts" ]; then \
-        echo "Installing @types/node-cron..." && \
-        npm install @types/node-cron@^3.0.11 --save-dev || \
-        (echo "Retrying @types/node-cron..." && sleep 3 && npm install @types/node-cron@^3.0.11 --save-dev); \
-    fi && \
-    echo "TypeScript types verified"
+# Ensure all TypeScript types are installed
+RUN echo "Ensuring TypeScript types are installed..." && \
+    npm install --save-dev \
+        @types/node@^20.19.24 \
+        @types/bcrypt@^5.0.0 \
+        @types/jsonwebtoken@^9.0.6 \
+        @types/nodemailer@^7.0.3 \
+        @types/node-cron@^3.0.11 || \
+    (echo "Retrying type installation..." && sleep 3 && npm install --save-dev \
+        @types/node@^20.19.24 \
+        @types/bcrypt@^5.0.0 \
+        @types/jsonwebtoken@^9.0.6 \
+        @types/nodemailer@^7.0.3 \
+        @types/node-cron@^3.0.11) && \
+    echo "TypeScript types installation completed"
 
-# Final verification before compilation
-RUN echo "Final type verification..." && \
+# Verify types are available
+RUN echo "Verifying types availability..." && \
     if [ ! -f "./node_modules/@types/node/index.d.ts" ]; then \
-        echo "CRITICAL ERROR: @types/node not available" && exit 1; \
+        echo "ERROR: @types/node not found" && exit 1; \
     fi && \
     if [ ! -f "./node_modules/@types/bcrypt/index.d.ts" ]; then \
-        echo "CRITICAL ERROR: @types/bcrypt not available" && exit 1; \
+        echo "ERROR: @types/bcrypt not found" && exit 1; \
     fi && \
     if [ ! -f "./node_modules/@types/jsonwebtoken/index.d.ts" ]; then \
-        echo "CRITICAL ERROR: @types/jsonwebtoken not available" && exit 1; \
+        echo "ERROR: @types/jsonwebtoken not found" && exit 1; \
     fi && \
-    echo "All required types available"
+    echo "All required types are available"
 
 # Compile TypeScript
 RUN echo "Compiling TypeScript..." && npm run build
@@ -98,31 +84,23 @@ RUN echo "Compiling TypeScript..." && npm run build
 RUN mkdir -p ./scripts
 COPY backend/scripts/ ./scripts/
 
-# Remove development scripts
+# Remove development scripts if they exist
 RUN rm -f ./scripts/generate-test-clients.ts \
            ./scripts/ping.ts \
            ./scripts/seed-demo-data.ts \
            ./scripts/deployment-diagnostic.sh \
            ./scripts/extract-database-url.sh \
            ./scripts/fix-database-url.sh \
-           ./scripts/migrate-to-postgres.sh
+           ./scripts/migrate-to-postgres.sh 2>/dev/null || true
 
-# Verify critical scripts exist
+# Verify railway-init.sh exists (critical script)
 RUN if [ ! -f ./scripts/railway-init.sh ]; then \
-        echo "ERROR: railway-init.sh not found" && exit 1; \
+        echo "ERROR: railway-init.sh not found" && ls -la ./scripts/ && exit 1; \
     fi && \
-    if [ ! -f ./scripts/init.sh ]; then \
-        echo "ERROR: init.sh not found" && exit 1; \
-    fi && \
-    if [ ! -f ./scripts/start-production.sh ]; then \
-        echo "ERROR: start-production.sh not found" && exit 1; \
-    fi && \
-    if [ ! -f ./scripts/validate-env.sh ]; then \
-        echo "ERROR: validate-env.sh not found" && exit 1; \
-    fi
+    echo "railway-init.sh found"
 
-# Make scripts executable
-RUN find ./scripts -name "*.sh" -type f -exec chmod +x {} \;
+# Make all shell scripts executable
+RUN find ./scripts -name "*.sh" -type f -exec chmod +x {} \; 2>/dev/null || true
 
 # Clean up source files
 RUN rm -rf src/ tsconfig.json

@@ -1,34 +1,34 @@
 #!/bin/bash
 
-# Script de inicialización para Railway deployment
+# Railway initialization script
 set -e
 
-echo "🚀 Iniciando DannigOptica Backend en Railway..."
+echo "Starting DannigOptica Backend on Railway..."
 
-# Verificar variables de entorno críticas
-echo "🔍 Verificando variables de entorno..."
+# Verify critical environment variables
+echo "Verifying environment variables..."
 if [ -z "$DATABASE_URL" ]; then
-    echo "❌ ERROR: DATABASE_URL no está configurada"
+    echo "ERROR: DATABASE_URL is not configured"
     exit 1
 fi
 
 if [ -z "$JWT_SECRET" ]; then
-    echo "❌ ERROR: JWT_SECRET no está configurada"
+    echo "ERROR: JWT_SECRET is not configured"
     exit 1
 fi
 
-echo "✅ Variables de entorno configuradas correctamente"
+echo "Environment variables configured correctly"
 
-# Generar cliente de Prisma
-echo "🔧 Generando cliente de Prisma..."
+# Generate Prisma client
+echo "Generating Prisma client..."
 npx prisma generate
 
-# Aplicar migraciones a la base de datos
-echo "📊 Aplicando migraciones a la base de datos..."
+# Apply database migrations
+echo "Applying database migrations..."
 npx prisma db push --accept-data-loss
 
-echo "✅ Base de datos inicializada correctamente"
+echo "Database initialized correctly"
 
-# Iniciar el servidor
-echo "🚀 Iniciando servidor..."
+# Start server
+echo "Starting server..."
 exec npm start
