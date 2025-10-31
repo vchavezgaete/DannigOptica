@@ -379,9 +379,9 @@ export default function Ventas() {
   };
 
   return (
-    <div className="grid">
+    <div className="grid" style={{ maxWidth: "100%", overflowX: "hidden" }}>
       {/* Header */}
-      <div className="section">
+      <div className="section" style={{ maxWidth: "100%" }}>
         <div className="section__header">
           <h1 className="section__title">💰 Gestión de Ventas</h1>
           <p className="section__subtitle">
@@ -391,17 +391,19 @@ export default function Ventas() {
       </div>
 
       {/* Alertas */}
-      {msg && <div className="alert alert--success">✅ {msg}</div>}
-      {err && <div className="alert alert--error">❌ {err}</div>}
+      <div style={{ maxWidth: "100%", padding: "0 1rem" }}>
+        {msg && <div className="alert alert--success">✅ {msg}</div>}
+        {err && <div className="alert alert--error">❌ {err}</div>}
+      </div>
 
       {/* Nueva Venta */}
-      <div className="section">
+      <div className="section" style={{ maxWidth: "100%", overflowX: "hidden" }}>
         <div className="section__header">
           <h2 className="section__title">➕ Nueva Venta</h2>
         </div>
 
         {/* Búsqueda de Cliente */}
-        <div className="form">
+        <div className="form" style={{ maxWidth: "100%" }}>
           <div className="form__row">
               <div className="form__group" style={{ flex: 1 }}>
               <label className="form__label">Buscar Cliente por RUT *</label>
@@ -481,10 +483,10 @@ export default function Ventas() {
                 </div>
 
                 {showAgregarProducto && (
-                  <div className="card" style={{ marginBottom: "1rem", padding: "1.5rem" }}>
+                  <div className="card" style={{ marginBottom: "1rem", padding: "1.5rem", maxWidth: "100%" }}>
                     <h4 style={{ marginTop: 0 }}>Agregar Producto</h4>
-                    <div className="form__row">
-                      <div className="form__group" style={{ flex: 2 }}>
+                    <div className="form__row" style={{ flexWrap: "wrap", gap: "1rem" }}>
+                      <div className="form__group" style={{ flex: "1 1 300px", minWidth: "200px" }}>
                         <label className="form__label">Producto *</label>
                         <select
                           className="form__input"
@@ -497,6 +499,7 @@ export default function Ventas() {
                               setPrecioUnitario(Number(prod.precio));
                             }
                           }}
+                          style={{ width: "100%" }}
                         >
                           <option value="">Selecciona un producto</option>
                           {productos.map(prod => (
@@ -506,7 +509,7 @@ export default function Ventas() {
                           ))}
                         </select>
                       </div>
-                      <div className="form__group">
+                      <div className="form__group" style={{ flex: "0 1 120px", minWidth: "100px" }}>
                         <label className="form__label">Cantidad *</label>
                         <input
                           type="number"
@@ -514,10 +517,11 @@ export default function Ventas() {
                           className="form__input"
                           value={cantidadProducto}
                           onChange={(e) => setCantidadProducto(Number(e.target.value))}
+                          style={{ width: "100%" }}
                         />
                       </div>
-                      <div className="form__group">
-                        <label className="form__label">Precio Unitario *</label>
+                      <div className="form__group" style={{ flex: "0 1 150px", minWidth: "120px" }}>
+                        <label className="form__label">Precio Unit. *</label>
                         <input
                           type="number"
                           min="0"
@@ -525,12 +529,14 @@ export default function Ventas() {
                           className="form__input"
                           value={precioUnitario}
                           onChange={(e) => setPrecioUnitario(Number(e.target.value))}
+                          style={{ width: "100%" }}
                         />
                       </div>
-                      <div className="form__group" style={{ display: "flex", alignItems: "flex-end" }}>
+                      <div className="form__group" style={{ flex: "0 1 auto", display: "flex", alignItems: "flex-end" }}>
                         <button
                           className="btn btn--primary"
                           onClick={agregarProducto}
+                          style={{ whiteSpace: "nowrap" }}
                         >
                           ✅ Agregar
                         </button>
@@ -545,8 +551,8 @@ export default function Ventas() {
                   </div>
                 ) : (
                   <>
-                    <div className="table-container" style={{ overflowX: "auto" }}>
-                      <table className="table">
+                    <div className="table-container" style={{ overflowX: "auto", maxWidth: "100%", width: "100%" }}>
+                      <table className="table" style={{ width: "100%", tableLayout: "auto" }}>
                         <thead>
                           <tr>
                             <th>Producto</th>
@@ -609,7 +615,7 @@ export default function Ventas() {
       </div>
 
       {/* Historial de Ventas */}
-      <div className="section">
+      <div className="section" style={{ maxWidth: "100%", overflowX: "hidden" }}>
         <div className="section__header">
           <h2 className="section__title">📋 Historial de Ventas</h2>
           <p className="section__subtitle">
@@ -624,15 +630,15 @@ export default function Ventas() {
             No hay ventas registradas aún
           </div>
         ) : (
-          <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem", maxWidth: "100%" }}>
             {ventas.map(venta => (
-              <div key={venta.idVenta} className="card">
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "start", marginBottom: "1rem" }}>
-                  <div>
-                    <h3 style={{ margin: "0 0 0.5rem" }}>
+              <div key={venta.idVenta} className="card" style={{ maxWidth: "100%", overflowX: "hidden" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "start", marginBottom: "1rem", flexWrap: "wrap", gap: "1rem" }}>
+                  <div style={{ flex: "1 1 300px", minWidth: "200px" }}>
+                    <h3 style={{ margin: "0 0 0.5rem", wordBreak: "break-word" }}>
                       Venta #{venta.idVenta}
                     </h3>
-                    <p style={{ margin: "0.25rem 0", color: "var(--texto-sec)" }}>
+                    <p style={{ margin: "0.25rem 0", color: "var(--texto-sec)", wordBreak: "break-word" }}>
                       <strong>Cliente:</strong> {venta.cliente.nombre} ({venta.cliente.rut})
                     </p>
                     <p style={{ margin: "0.25rem 0", color: "var(--texto-sec)" }}>
@@ -644,15 +650,15 @@ export default function Ventas() {
                       </p>
                     )}
                   </div>
-                  <div style={{ textAlign: "right" }}>
-                    <div style={{ fontSize: "1.5rem", fontWeight: "700", color: "var(--verde)" }}>
+                  <div style={{ textAlign: "right", flex: "0 1 auto" }}>
+                    <div style={{ fontSize: "1.5rem", fontWeight: "700", color: "var(--verde)", whiteSpace: "nowrap" }}>
                       ${Number(venta.total).toLocaleString()}
                     </div>
                   </div>
                 </div>
 
-                <div className="table-container" style={{ overflowX: "auto", marginTop: "1rem" }}>
-                  <table className="table">
+                <div className="table-container" style={{ overflowX: "auto", marginTop: "1rem", maxWidth: "100%", width: "100%" }}>
+                  <table className="table" style={{ width: "100%", tableLayout: "auto" }}>
                     <thead>
                       <tr>
                         <th>Producto</th>
@@ -713,7 +719,9 @@ export default function Ventas() {
             padding: "2rem",
             borderRadius: "1rem",
             maxWidth: "500px",
-            width: "90%"
+            width: "90%",
+            maxHeight: "90vh",
+            overflowY: "auto"
           }}>
             <h3 style={{ marginTop: 0 }}>📋 Registrar Garantía</h3>
             
