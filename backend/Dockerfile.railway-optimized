@@ -62,21 +62,32 @@ RUN if [ ! -f "./tsconfig.json" ]; then \
     fi && \
     echo "✅ tsconfig.json encontrado"
 
-# Asegurar que los tipos de Node estén disponibles antes de compilar
-# Si no están, instalarlos automáticamente
-RUN echo "🔍 Verificando tipos de TypeScript..." && \
-    if [ ! -d "./node_modules/@types/node" ] || [ ! -f "./node_modules/@types/node/index.d.ts" ]; then \
-        echo "⚠️  @types/node no encontrado, instalando..." && \
-        npm install @types/node@^20.0.0 --save-dev && \
-        echo "✅ @types/node instalado"; \
-    else \
-        echo "✅ @types/node ya está disponible"; \
+# Instalar todos los tipos necesarios para TypeScript antes de compilar
+RUN echo "Verificando e instalando tipos de TypeScript..." && \
+    npm install --save-dev \
+        @types/node@^20.19.24 \
+        @types/bcrypt@^5.0.0 \
+        @types/jsonwebtoken@^9.0.6 \
+        @types/nodemailer@^7.0.3 \
+        @types/node-cron@^3.0.11 \
+    && echo "Tipos de TypeScript instalados correctamente"
+
+# Verificar que todos los tipos críticos estén presentes
+RUN echo "Verificando tipos instalados..." && \
+    ls -la ./node_modules/@types/ 2>/dev/null | head -20 && \
+    if [ ! -f "./node_modules/@types/node/index.d.ts" ]; then \
+        echo "ERROR: @types/node no encontrado" && exit 1; \
     fi && \
-    echo "📦 Verificando tipos instalados:" && \
-    ls -la ./node_modules/@types/ 2>/dev/null | grep -E "(node|bcrypt|jsonwebtoken)" || echo "Algunos tipos pueden estar en dependencias transitivas"
+    if [ ! -f "./node_modules/@types/bcrypt/index.d.ts" ]; then \
+        echo "ERROR: @types/bcrypt no encontrado" && exit 1; \
+    fi && \
+    if [ ! -f "./node_modules/@types/jsonwebtoken/index.d.ts" ]; then \
+        echo "ERROR: @types/jsonwebtoken no encontrado" && exit 1; \
+    fi && \
+    echo "Todos los tipos requeridos estan disponibles"
 
 # Compilar TypeScript
-RUN echo "🔨 Compilando TypeScript..." && \
+RUN echo "Compilando TypeScript..." && \
     npm run build
 
 # Crear directorio de scripts
