@@ -33,24 +33,22 @@ COPY backend/prisma ./prisma
 # Instalar todas las dependencias incluyendo devDependencies
 # Necesitamos devDependencies para Prisma CLI, TypeScript y tipos
 # El postinstall ejecutará prisma generate automáticamente
-# Temporalmente establecer NODE_ENV para forzar instalación de devDependencies
-RUN NODE_ENV=development npm ci --no-audit --no-fund \
-    && npm cache clean --force \
-    && rm -rf /tmp/.npm
+# Usar NODE_ENV=development para asegurar instalación de devDependencies
+# Agregar reintentos para problemas de red
+RUN NODE_ENV=development npm ci --no-audit --no-fund || \
+    (echo "Reintentando npm ci..." && sleep 2 && NODE_ENV=development npm ci --no-audit --no-fund) || \
+    (echo "Segundo reintento..." && sleep 5 && NODE_ENV=development npm ci --no-audit --no-fund) && \
+    npm cache clean --force
 
-# Validaciones previas: verificar que dependencias críticas estén instaladas
-RUN if [ ! -d "./node_modules/@types/node" ]; then \
-        echo "❌ ERROR: @types/node no está instalado" && \
-        npm list @types/node || npm install @types/node@^20.0.0 --save-dev && \
-        echo "✅ @types/node instalado correctamente"; \
-    fi && \
+# Verificar que dependencias críticas estén instaladas después de npm ci
+RUN echo "Verificando dependencias instaladas..." && \
     if [ ! -d "./node_modules/typescript" ]; then \
-        echo "❌ ERROR: TypeScript no está instalado" && exit 1; \
+        echo "ERROR: TypeScript no está instalado" && exit 1; \
     fi && \
     if [ ! -d "./node_modules/@prisma/client" ]; then \
-        echo "❌ ERROR: @prisma/client no está instalado" && exit 1; \
+        echo "ERROR: @prisma/client no está instalado" && exit 1; \
     fi && \
-    echo "✅ Todas las dependencias críticas están instaladas"
+    echo "Dependencias básicas verificadas"
 
 # Copiar archivos de configuración
 COPY backend/tsconfig.json ./
@@ -64,27 +62,49 @@ RUN if [ ! -f "./tsconfig.json" ]; then \
     fi && \
     echo "✅ tsconfig.json encontrado"
 
-# Verificar e instalar tipos de TypeScript si no están presentes
-RUN echo "Verificando tipos de TypeScript..." && \
-    npm list @types/node 2>/dev/null || npm install --no-save @types/node@^20.19.24 && \
-    npm list @types/bcrypt 2>/dev/null || npm install --no-save @types/bcrypt@^5.0.0 && \
-    npm list @types/jsonwebtoken 2>/dev/null || npm install --no-save @types/jsonwebtoken@^9.0.6 && \
-    npm list @types/nodemailer 2>/dev/null || npm install --no-save @types/nodemailer@^7.0.3 && \
-    npm list @types/node-cron 2>/dev/null || npm install --no-save @types/node-cron@^3.0.11 && \
-    echo "Tipos de TypeScript verificados"
+# Verificar que todos los tipos necesarios estén instalados después de npm ci
+# Si falta alguno, reinstalarlo usando npm install con reintentos
+RUN echo "Verificando tipos de TypeScript instalados..." && \
+    if [ ! -d "./node_modules/@types/node" ] || [ ! -f "./node_modules/@types/node/index.d.ts" ]; then \
+        echo "Instalando @types/node..." && \
+        npm install @types/node@^20.19.24 --save-dev || \
+        (echo "Reintentando @types/node..." && sleep 3 && npm install @types/node@^20.19.24 --save-dev) || \
+        (echo "Segundo reintento @types/node..." && sleep 5 && npm install @types/node@^20.19.24 --save-dev); \
+    fi && \
+    if [ ! -d "./node_modules/@types/bcrypt" ] || [ ! -f "./node_modules/@types/bcrypt/index.d.ts" ]; then \
+        echo "Instalando @types/bcrypt..." && \
+        npm install @types/bcrypt@^5.0.0 --save-dev || \
+        (echo "Reintentando @types/bcrypt..." && sleep 3 && npm install @types/bcrypt@^5.0.0 --save-dev); \
+    fi && \
+    if [ ! -d "./node_modules/@types/jsonwebtoken" ] || [ ! -f "./node_modules/@types/jsonwebtoken/index.d.ts" ]; then \
+        echo "Instalando @types/jsonwebtoken..." && \
+        npm install @types/jsonwebtoken@^9.0.6 --save-dev || \
+        (echo "Reintentando @types/jsonwebtoken..." && sleep 3 && npm install @types/jsonwebtoken@^9.0.6 --save-dev); \
+    fi && \
+    if [ ! -d "./node_modules/@types/nodemailer" ] || [ ! -f "./node_modules/@types/nodemailer/index.d.ts" ]; then \
+        echo "Instalando @types/nodemailer..." && \
+        npm install @types/nodemailer@^7.0.3 --save-dev || \
+        (echo "Reintentando @types/nodemailer..." && sleep 3 && npm install @types/nodemailer@^7.0.3 --save-dev); \
+    fi && \
+    if [ ! -d "./node_modules/@types/node-cron" ] || [ ! -f "./node_modules/@types/node-cron/index.d.ts" ]; then \
+        echo "Instalando @types/node-cron..." && \
+        npm install @types/node-cron@^3.0.11 --save-dev || \
+        (echo "Reintentando @types/node-cron..." && sleep 3 && npm install @types/node-cron@^3.0.11 --save-dev); \
+    fi && \
+    echo "Tipos de TypeScript verificados e instalados"
 
-# Verificar que los tipos críticos estén disponibles
-RUN echo "Verificando que los tipos estan disponibles..." && \
-    if [ ! -d "./node_modules/@types/node" ] || [ ! -f "./node_modules/@types/node/package.json" ]; then \
-        echo "ERROR: @types/node no encontrado" && exit 1; \
+# Verificación final de tipos críticos antes de compilar
+RUN echo "Verificación final de tipos..." && \
+    if [ ! -f "./node_modules/@types/node/index.d.ts" ]; then \
+        echo "ERROR CRITICO: @types/node no está disponible después de instalación" && exit 1; \
     fi && \
-    if [ ! -d "./node_modules/@types/bcrypt" ] || [ ! -f "./node_modules/@types/bcrypt/package.json" ]; then \
-        echo "ERROR: @types/bcrypt no encontrado" && exit 1; \
+    if [ ! -f "./node_modules/@types/bcrypt/index.d.ts" ]; then \
+        echo "ERROR CRITICO: @types/bcrypt no está disponible después de instalación" && exit 1; \
     fi && \
-    if [ ! -d "./node_modules/@types/jsonwebtoken" ] || [ ! -f "./node_modules/@types/jsonwebtoken/package.json" ]; then \
-        echo "ERROR: @types/jsonwebtoken no encontrado" && exit 1; \
+    if [ ! -f "./node_modules/@types/jsonwebtoken/index.d.ts" ]; then \
+        echo "ERROR CRITICO: @types/jsonwebtoken no está disponible después de instalación" && exit 1; \
     fi && \
-    echo "Todos los tipos requeridos estan disponibles"
+    echo "Todos los tipos requeridos están disponibles y listos para compilar"
 
 # Compilar TypeScript
 RUN echo "Compilando TypeScript..." && \
