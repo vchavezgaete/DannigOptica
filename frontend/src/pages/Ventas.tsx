@@ -20,6 +20,67 @@ import { useState, useEffect, useContext } from "react";
 import { api } from "../api";
 import { AuthContext } from "../auth/AuthContext";
 
+// Funciones para formatear y validar RUT
+function limpiarRUT(rut: string): string {
+  return rut.replace(/[^0-9kK]/g, '').toUpperCase();
+}
+
+function calcularDigitoVerificador(rut: string): string {
+  let suma = 0;
+  let multiplo = 2;
+  
+  for (let i = rut.length - 1; i >= 0; i--) {
+    suma += parseInt(rut[i]) * multiplo;
+    multiplo = multiplo === 7 ? 2 : multiplo + 1;
+  }
+  
+  const resto = suma % 11;
+  const dv = 11 - resto;
+  
+  if (dv === 11) return '0';
+  if (dv === 10) return 'K';
+  return dv.toString();
+}
+
+function formatearRUT(rut: string): string {
+  // Limpiar el RUT
+  const rutLimpio = limpiarRUT(rut);
+  
+  if (rutLimpio.length === 0) return '';
+  
+  // Si tiene más de 8 dígitos, truncar y calcular DV
+  if (rutLimpio.length > 8) {
+    const numero = rutLimpio.substring(0, 8);
+    const dv = calcularDigitoVerificador(numero);
+    return formatearRUTCompleto(numero + dv);
+  }
+  
+  // Si tiene 8 dígitos, calcular DV automáticamente
+  if (rutLimpio.length === 8) {
+    const numero = rutLimpio;
+    const dv = calcularDigitoVerificador(numero);
+    return formatearRUTCompleto(numero + dv);
+  }
+  
+  // Si tiene menos de 8 dígitos, solo formatear
+  return formatearRUTCompleto(rutLimpio);
+}
+
+function formatearRUTCompleto(rut: string): string {
+  const rutLimpio = limpiarRUT(rut);
+  
+  if (rutLimpio.length === 0) return '';
+  
+  // Separar número y dígito verificador
+  const numero = rutLimpio.slice(0, -1);
+  const dv = rutLimpio.slice(-1);
+  
+  // Formatear número con puntos
+  const numeroFormateado = numero.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+  
+  return `${numeroFormateado}-${dv}`;
+}
+
 // Tipo para representar un cliente
 type Cliente = {
   idCliente: number;
@@ -342,15 +403,25 @@ export default function Ventas() {
         {/* Búsqueda de Cliente */}
         <div className="form">
           <div className="form__row">
-            <div className="form__group" style={{ flex: 1 }}>
+              <div className="form__group" style={{ flex: 1 }}>
               <label className="form__label">Buscar Cliente por RUT *</label>
               <div style={{ display: "flex", gap: "0.5rem" }}>
                 <input
                   className="form__input"
-                  placeholder="Ej: 12345678-9"
+                  placeholder="Ej: 12345678-9 o 12345678"
                   value={clienteRut}
-                  onChange={(e) => setClienteRut(e.target.value)}
+                  onChange={(e) => {
+                    // Formatear automáticamente mientras se escribe
+                    const rutFormateado = formatearRUT(e.target.value);
+                    setClienteRut(rutFormateado);
+                  }}
                   onKeyPress={(e) => e.key === "Enter" && buscarCliente()}
+                  style={{
+                    fontFamily: 'monospace',
+                    fontSize: '1rem',
+                    letterSpacing: '0.05em'
+                  }}
+                  maxLength={12}
                 />
                 <button
                   className="btn btn--secondary"
@@ -359,6 +430,13 @@ export default function Ventas() {
                 >
                   🔍 Buscar
                 </button>
+              </div>
+              <div style={{ 
+                color: 'var(--texto-sec)', 
+                fontSize: '0.8rem', 
+                marginTop: '0.25rem' 
+              }}>
+                💡 El RUT se formatea automáticamente con puntos y guion
               </div>
             </div>
           </div>
