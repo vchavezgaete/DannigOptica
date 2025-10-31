@@ -429,12 +429,40 @@ function ProductosMasVendidosTable({ datos }: { datos: ProductoData[] }) {
         {/* Bar Chart - Ingresos */}
         <div className="card">
           <h3 style={{ margin: "0 0 1rem", color: "var(--verde)" }}>💰 Ingresos por Producto</h3>
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={datos}>
+          <ResponsiveContainer width="100%" height={400}>
+            <BarChart data={datos} margin={{ top: 20, right: 30, left: 20, bottom: 120 }}>
               <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="nombre" angle={-45} textAnchor="end" height={100} />
-              <YAxis />
-              <Tooltip formatter={(value: number) => `$${Number(value).toLocaleString("es-CL")}`} />
+              <XAxis 
+                dataKey="nombre" 
+                angle={-45} 
+                textAnchor="end" 
+                height={120}
+                interval={0}
+                tick={{ fontSize: 12 }}
+                tickFormatter={(value: string) => {
+                  // Truncar nombres muy largos a 20 caracteres
+                  if (value.length > 20) {
+                    return value.substring(0, 17) + '...';
+                  }
+                  return value;
+                }}
+              />
+              <YAxis 
+                tickFormatter={(value: number) => {
+                  // Formatear valores grandes con K o M
+                  if (value >= 1000000) {
+                    return `$${(value / 1000000).toFixed(1)}M`;
+                  }
+                  if (value >= 1000) {
+                    return `$${(value / 1000).toFixed(0)}K`;
+                  }
+                  return `$${value}`;
+                }}
+              />
+              <Tooltip 
+                formatter={(value: number) => `$${Number(value).toLocaleString("es-CL")}`}
+                labelStyle={{ color: '#374151', fontWeight: 'bold' }}
+              />
               <Legend />
               <Bar dataKey="ingresoTotal" fill="#10b981" name="Ingreso Total" />
             </BarChart>
