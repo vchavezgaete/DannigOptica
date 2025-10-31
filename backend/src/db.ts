@@ -8,10 +8,12 @@ try {
   
   // En desarrollo, mostrar URL enmascarada para debugging
   if (process.env.NODE_ENV !== 'production') {
-    console.log('🔗 DATABASE_URL:', maskDatabaseUrl(databaseUrl));
+    console.log('DATABASE_URL:', maskDatabaseUrl(databaseUrl));
   }
 } catch (error) {
-  console.error('❌ Error resolviendo DATABASE_URL:', error instanceof Error ? error.message : String(error));
+  const errorMessage = error instanceof Error ? error.message : String(error);
+  console.error('ERROR: Failed to resolve DATABASE_URL:', errorMessage);
+  console.error('Please configure DATABASE_URL environment variable in Railway dashboard');
   process.exit(1);
   // Esta línea nunca se ejecutará, pero TypeScript necesita una asignación aquí
   databaseUrl = '';
@@ -27,4 +29,4 @@ export const prisma = new PrismaClient({
   log: ['warn', 'error'],
 });
 
-console.log('✅ Prisma Client configurado correctamente');
+console.log('Prisma Client configured successfully');

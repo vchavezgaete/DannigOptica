@@ -5,7 +5,7 @@ export function resolveDatabaseUrl(): string {
   let databaseUrl = process.env.DATABASE_URL;
 
   if (!databaseUrl) {
-    throw new Error('DATABASE_URL no está configurada');
+    throw new Error('DATABASE_URL environment variable is not configured. Please set it in Railway dashboard under Variables.');
   }
 
   // Si ya tiene el protocolo correcto, usarla tal como está
