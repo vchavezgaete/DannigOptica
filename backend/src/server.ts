@@ -105,15 +105,35 @@ async function startServer() {
     console.log(`   - DATABASE_URL: ${process.env.DATABASE_URL ? 'configured' : 'not configured'}`);
     console.log(`   - JWT_SECRET: ${process.env.JWT_SECRET ? 'configured' : 'not configured'}`);
     
-    await app.listen({ port: Number(PORT), host: HOST });
-    console.log(`API running on http://${HOST}:${PORT}`);
+    // Verificar que el puerto esté disponible
+    const portNumber = Number(PORT);
+    if (isNaN(portNumber) || portNumber < 1 || portNumber > 65535) {
+      throw new Error(`Invalid PORT: ${PORT}. Must be a number between 1 and 65535`);
+    }
+    
+    // Iniciar servidor
+    await app.listen({ port: portNumber, host: HOST });
+    console.log(`API running on http://${HOST}:${portNumber}`);
     console.log('Server started successfully');
     
     // Iniciar sistema de alertas automatizadas
-    iniciarCronJobs();
-  } catch (err) {
+    try {
+      iniciarCronJobs();
+    } catch (cronError) {
+      console.error('Warning: Failed to start cron jobs:', cronError);
+      // No fallar el servidor si los cron jobs fallan
+    }
+  } catch (err: any) {
     console.error('Error starting server:', err);
-    process.exit(1);
+    console.error('Error details:', {
+      message: err?.message,
+      code: err?.code,
+      stack: err?.stack
+    });
+    // Esperar un poco antes de salir para que los logs se envíen
+    setTimeout(() => {
+      process.exit(1);
+    }, 1000);
   }
 }
 
